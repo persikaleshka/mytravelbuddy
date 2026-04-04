@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr
+from datetime import date, datetime
 from typing import Optional, List
-from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -16,8 +17,7 @@ class UserLogin(BaseModel):
 class UserResponse(UserBase):
     id: int
     created_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PreferenceCreate(BaseModel):
     interests: str
@@ -30,32 +30,36 @@ class LocationBase(BaseModel):
     city: str
     latitude: float
     longitude: float
-    price_level: int
+    price_level: int = Field(ge=1, le=5)
     description: Optional[str] = None
-    rating: Optional[float] = 0.0
+    rating: Optional[float] = Field(default=0.0, ge=0.0, le=5.0)
 
 class LocationResponse(LocationBase):
     id: int
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class RouteItemCreate(BaseModel):
-    location_id: int
-    day_number: int
-    order_in_day: int
+    location_id: int = Field(gt=0)
+    day_number: int = Field(gt=0)
+    order_in_day: int = Field(gt=0)
 
 class TravelRouteCreate(BaseModel):
     name: str
     city: str
-    start_date: str
-    end_date: str
+    start_date: date
+    end_date: date
     items: List[RouteItemCreate]
+
+    @model_validator(mode="after")
+    def validate_dates(self):
+        if self.start_date > self.end_date:
+            raise ValueError("start_date must be before or equal to end_date")
+        return self
 
 class TravelRouteResponse(BaseModel):
     id: int
     name: str
     city: str
-    start_date: str
-    end_date: str
-    class Config:
-        from_attributes = True
+    start_date: date
+    end_date: date
+    model_config = ConfigDict(from_attributes=True)

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация | MyTravelBuddy</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>MyTravelBuddy</h1>
+        <nav>
+            <a href="/">Главная</a>
+            <a href="/auth/login">Войти</a>
+        </nav>
+    </header>
+    <main>
+        <h2>Регистрация</h2>
+        <form id="register-form">
+            <input type="text" id="name" placeholder="Имя" required>
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Пароль" required>
+            <button class="btn" type="submit">Создать аккаунт</button>
+        </form>
+        <p id="message"></p>
+    </main>
+    <script>
+        document.getElementById("register-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById("name").value,
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value
+            };
+            const res = await fetch("/auth/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            const message = document.getElementById("message");
+            if (!res.ok) {
+                message.textContent = data.detail || "Ошибка регистрации";
+                return;
+            }
+            message.textContent = "Регистрация успешна, теперь можно войти.";
+            setTimeout(() => window.location.href = "/auth/login", 800);
+        });
+    </script>
+</body>
+</html>
