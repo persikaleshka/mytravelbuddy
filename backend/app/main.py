@@ -9,6 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from .api import auth as api_auth
 from .api import locations as api_locations
+from .api import profile as api_profile
 from .api import routes as api_routes
 from .database import engine, Base
 from .routes import users
@@ -34,6 +35,7 @@ templates = Jinja2Templates(directory="app/templates")
 
 app.include_router(users.router, prefix="/auth", tags=["users"])
 app.include_router(api_auth.router, prefix="/api/auth", tags=["api-auth"])
+app.include_router(api_profile.router, prefix="/api", tags=["api-profile"])
 app.include_router(api_locations.router, prefix="/api", tags=["api-locations"])
 app.include_router(api_routes.router, prefix="/api", tags=["api-routes"])
 

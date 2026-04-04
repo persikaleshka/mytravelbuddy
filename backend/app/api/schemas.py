@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
@@ -106,3 +106,25 @@ class ApiRouteResponse(BaseModel):
             createdAt=created,
             updatedAt=created,
         )
+
+
+BudgetValue = Literal["эконом", "средний", "люкс"]
+TravelStyleValue = Literal["расслабленный", "активный", "культурный"]
+
+
+class ApiProfileResponse(BaseModel):
+    preferences: list[str]
+    budget: BudgetValue
+    travel_style: list[TravelStyleValue]
+
+
+class ApiProfileUpdate(BaseModel):
+    preferences: list[str] = Field(default_factory=list)
+    budget: BudgetValue
+    travel_style: list[TravelStyleValue] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def normalize(self):
+        self.preferences = [value.strip() for value in self.preferences if value.strip()]
+        self.travel_style = list(dict.fromkeys(self.travel_style))
+        return self
