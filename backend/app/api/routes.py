@@ -1,5 +1,3 @@
-from datetime import date
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -27,11 +25,19 @@ def _parse_location_ids(raw_ids: list[str]) -> list[int]:
 
 def _serialize_route(route: models.TravelRoute) -> ApiRouteResponse:
     sorted_items = sorted(route.items, key=lambda item: (item.day_number, item.order_in_day))
+    cities = [city.strip() for city in (route.city or "").split(",") if city.strip()]
+    preferences = ""
+    if route.user and route.user.preferences:
+        preferences = route.user.preferences.interests or ""
+
     return ApiRouteResponse.from_db(
         route_id=route.id,
         user_id=route.user_id,
         name=route.name,
-        description=route.city or "",
+        cities=cities,
+        start_date=route.start_date,
+        end_date=route.end_date,
+        preferences=preferences,
         created_at=route.created_at,
         location_ids=[item.location_id for item in sorted_items],
     )
@@ -57,12 +63,13 @@ async def create_route(
         )
 
     try:
+        cities_str = ", ".join(city.strip() for city in route_data.cities if city.strip())
         db_route = models.TravelRoute(
             user_id=current_user.id,
             name=route_data.name,
-            city=route_data.description or "",
-            start_date=date.today(),
-            end_date=date.today(),
+            city=cities_str,
+            start_date=route_data.startDate,
+            end_date=route_data.endDate,
         )
         db.add(db_route)
         db.flush()
@@ -76,6 +83,8 @@ async def create_route(
                     order_in_day=index,
                 )
             )
+        if current_user.preferences is not None:
+            current_user.preferences.interests = route_data.preferences
         db.commit()
         db.refresh(db_route)
     except Exception:
@@ -136,8 +145,20 @@ async def update_route(
 
     if payload.name is not None:
         route.name = payload.name
-    if payload.description is not None:
-        route.city = payload.description
+    if payload.cities is not None:
+        route.city = ", ".join(city.strip() for city in payload.cities if city.strip())
+    if payload.startDate is not None:
+        route.start_date = payload.startDate
+    if payload.endDate is not None:
+        route.end_date = payload.endDate
+    if payload.preferences is not None and current_user.preferences is not None:
+        current_user.preferences.interests = payload.preferences
+
+    if route.start_date > route.end_date:
+        raise HTTPException(
+            status_code=400,
+            detail="startDate must be before or equal to endDate",
+        )
 
     if payload.locations is not None:
         parsed_location_ids = _parse_location_ids(payload.locations)

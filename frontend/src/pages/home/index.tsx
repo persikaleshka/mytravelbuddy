@@ -1,9 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Home.css';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    // If user is already logged in, redirect to dashboard
+    if (localStorage.getItem('token')) {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
   
   const handleGetStarted = () => {
     navigate('/login');

@@ -18,7 +18,7 @@ const RegisterPage: React.FC = () => {
     setRegisterError('');
     register({ name, email, password }, {
       onSuccess: () => {
-        navigate('/');
+        navigate('/dashboard');
       },
       onError: (err: unknown) => {
         const error = err as AxiosError<ErrorResponse>;

@@ -1,7 +1,7 @@
 
 .home-page {
-  background: var(--primary);
-  color: white;
+  background: #a3b899; /* Color 4 for home page background */
+  color: #fceee9;
   font-family: var(--sans);
   min-height: 100vh;
   width: 100%;
@@ -10,7 +10,7 @@
 
 .hero-section {
   min-height: 80vh;
-  background: var(--primary);
+  background: #a3b899; /* Color 4 for hero background */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -25,7 +25,7 @@
   margin: 0 auto;
   position: relative;
   z-index: 2;
-  color: white;
+  color: #667b68; /* Color 5 for text */
 }
 
 .hero-title {
@@ -33,12 +33,12 @@
   font-weight: 800;
   line-height: 1.2;
   margin-bottom: var(--spacing-lg);
-  color: white;
+  color: #667b68; /* Color 5 for text */
 }
 
 .hero-subtitle {
   font-size: 1.25rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(102, 123, 104, 0.9); /* Color 5 with opacity */
   margin-bottom: var(--spacing-xl);
   max-width: 600px;
   margin-left: auto;
@@ -99,27 +99,42 @@
 }
 
 .btn-outline {
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid #667b68; /* Color 5 for border */
   background: transparent;
-  color: white;
+  color: #667b68; /* Color 5 for text */
 }
 
 .btn-outline:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.5);
-  color: white;
+  background: #fceee9; /* Color 2 for background */
+  border-color: #667b68; /* Color 5 for border */
+  color: #667b68; /* Color 5 for text */
+}
+
+.btn-outline:active {
+  background: #fceee9; /* Color 2 for background */
+  border-color: #667b68; /* Color 5 for border */
+  color: #667b68; /* Color 5 for text */
+  transform: scale(0.98);
 }
 
 .btn-primary {
-  background: var(--secondary);
-  color: white;
+  background: #fceee9; /* Color 2 for button background */
+  color: #667b68; /* Color 5 for text */
   box-shadow: var(--shadow-medium);
 }
 
 .btn-primary:hover {
-  background: #0d9488;
+  background: #f8d3c5; /* Color 1 for hover */
+  color: #667b68; /* Color 5 for text */
   transform: translateY(-2px);
   box-shadow: var(--shadow-large);
+}
+
+.btn-primary:active {
+  background: #f8d3c5; /* Color 1 for active */
+  color: #667b68; /* Color 5 for text */
+  transform: translateY(0);
+  box-shadow: var(--shadow-medium);
 }
 
 

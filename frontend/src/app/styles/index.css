@@ -1,32 +1,37 @@
 a {
   font-weight: 500;
-  color: var(--primary);
+  color: #a3b899; /* Color 4 for links */
   text-decoration: inherit;
 }
 
 a:hover {
-  color: #3b82f6;
+  color: #667b68; /* Color 5 for hover */
 }
 
 button {
-  border-radius: var(--radius-medium);
+  border-radius: var(--radius-small);
   border: none;
   padding: var(--spacing-sm) var(--spacing-md);
   font-size: 1em;
   font-weight: 500;
   font-family: var(--sans);
-  background-color: var(--primary);
-  color: white;
+  background-color: #fceee9; /* Color 2 for button background */
+  color: #667b68; /* Color 5 for text */
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 button:hover {
-  background-color: #3b82f6;
+  background-color: #f8d3c5; /* Color 1 for hover */
+}
+
+button:active {
+  background-color: #f8d3c5; /* Color 1 for active */
+  transform: scale(0.98);
 }
 
 button:focus,
 button:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid #a3b899; /* Color 4 for focus outline */
   outline-offset: 2px;
 }

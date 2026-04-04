@@ -1,5 +1,5 @@
 .login-page {
-  background: var(--background);
+  background: #a3b899; /* Color 4 for login page background */
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -26,6 +26,7 @@
   padding: var(--spacing-xxl);
   display: flex;
   flex-direction: column;
+  background: #fdf8f6; /* Custom background color for left side */
 }
 
 .login-brand {
@@ -33,7 +34,7 @@
 }
 
 .login-brand h1 {
-  color: var(--primary);
+  color: #667b68; /* Color 5 for brand color */
   margin-bottom: var(--spacing-xs);
 }
 
@@ -84,8 +85,8 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(77, 174, 247, 0.2);
+  border-color: #a3b899; /* Color 4 for border */
+  box-shadow: 0 0 0 3px rgba(163, 184, 153, 0.3); /* Color 4 with opacity */
 }
 
 .form-group input.error {
@@ -128,14 +129,14 @@
   height: 20px;
   width: 20px;
   background-color: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid #a3b899; /* Color 4 for border */
   border-radius: 4px;
   transition: all 0.2s ease;
 }
 
 .checkbox-label input:checked ~ .checkmark {
-  background-color: var(--primary);
-  border-color: var(--primary);
+  background-color: #a3b899; /* Color 4 for background */
+  border-color: #a3b899; /* Color 4 for border */
 }
 
 .checkmark:after {
@@ -182,34 +183,50 @@
 }
 
 .btn-outline {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
+  border: 1px solid #667b68; /* Color 5 for border */
+  background: #fceee9; /* Color 2 for background */
+  color: #667b68; /* Color 5 for text */
 }
 
 .btn-outline:hover {
-  background: #f0f9ff;
-  border-color: var(--primary);
-  color: var(--primary);
+  background: #667b68; /* Color 5 for background */
+  border-color: #667b68; /* Color 5 for border */
+  color: #fceee9; /* Color 2 for text */
+}
+
+.btn-outline:active {
+  background: #667b68; /* Color 5 for background */
+  border-color: #667b68; /* Color 5 for border */
+  color: #fceee9; /* Color 2 for text */
+  transform: scale(0.98);
 }
 
 .btn-primary {
-  background: var(--primary);
-  color: white;
+  background: #fceee9; /* Color 2 for button */
+  color: #667b68; /* Color 5 for text */
   box-shadow: var(--shadow-medium);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #3b82f6;
+  background: #f8d3c5; /* Color 1 for hover */
+  color: #667b68; /* Color 5 for text */
   transform: translateY(-2px);
   box-shadow: var(--shadow-large);
 }
 
+.btn-primary:active:not(:disabled) {
+  background: #f8d3c5; /* Color 1 for active */
+  color: #667b68; /* Color 5 for text */
+  transform: translateY(0);
+  box-shadow: var(--shadow-medium);
+}
+
 .btn-primary:disabled {
-  background: #93c5fd;
+  background: #f8d3c5; /* Color 1 for disabled */
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+  opacity: 0.7;
 }
 
 .divider {
@@ -251,7 +268,7 @@
 }
 
 .login-footer a {
-  color: var(--primary);
+  color: #a3b899; /* Color 4 for links */
   text-decoration: none;
   font-weight: 500;
 }
@@ -262,7 +279,7 @@
 
 .login-split-right {
   flex: 1;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: linear-gradient(135deg, #667b68 0%, #a3b899 100%); /* Using color 5 and 4 */
   display: flex;
   align-items: center;
   justify-content: center;

@@ -18,7 +18,7 @@ const LoginPage: React.FC = () => {
     setLoginError('');
     login({ email, password }, {
       onSuccess: () => {
-        navigate('/');
+        navigate('/dashboard');
       },
       onError: (err: unknown) => {
         const error = err as AxiosError<ErrorResponse>;
