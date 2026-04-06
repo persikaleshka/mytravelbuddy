@@ -1,0 +1,151 @@
+.account-page {
+  padding: 2rem;
+  background-color: #dde6d5; /* Color 3 for body background */
+  min-height: calc(100vh - 80px);
+  color: #667b68; /* Color 5 for text */
+}
+
+.account-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.account-container h1 {
+  margin-top: 0;
+  color: #667b68; /* Color 5 for text */
+  text-align: center;
+}
+
+.account-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.account-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #a3b899; /* Color 4 for border */
+}
+
+.account-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #a3b899; /* Color 4 for background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1.5rem;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #667b68; /* Color 5 for text */
+}
+
+.account-info h2 {
+  margin: 0 0 0.5rem 0;
+  color: #667b68; /* Color 5 for text */
+}
+
+.account-info p {
+  margin: 0;
+  color: #a3b899; /* Color 4 for text */
+}
+
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #667b68; /* Color 5 for text */
+}
+
+.form-group textarea,
+.form-group select {
+  padding: 0.75rem;
+  border: 1px solid #a3b899; /* Color 4 for border */
+  border-radius: 4px;
+  background-color: white;
+  color: #667b68; /* Color 5 for text */
+  font-size: 1rem;
+}
+
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #e6b9a4; /* Color 1 for focus */
+  box-shadow: 0 0 0 2px rgba(230, 185, 164, 0.2);
+}
+
+.form-group textarea::placeholder {
+  color: #a3b899; /* Color 4 for placeholder */
+}
+
+.account-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  align-items: center;
+}
+
+.save-success {
+  color: #667b68; /* Color 5 for text */
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  background-color: #dde6d5; /* Color 3 for background */
+  border-radius: 4px;
+  border: 1px solid #a3b899; /* Color 4 for border */
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  font-size: 1rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-outline {
+  border: 1px solid #a3b899; /* Color 4 for border */
+  background: transparent;
+  color: #667b68; /* Color 5 for text */
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: #a3b899; /* Color 4 for background */
+  color: #fceee9; /* Color 2 for text */
+}
+
+.btn-primary {
+  background: #e6b9a4; /* Color 1 for background */
+  color: #667b68; /* Color 5 for text */
+  border: 1px solid #e6b9a4; /* Color 1 for border */
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #d9a894; /* Darker shade of Color 1 */
+  border-color: #d9a894;
+}

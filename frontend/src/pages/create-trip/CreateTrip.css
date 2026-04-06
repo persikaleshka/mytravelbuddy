@@ -28,6 +28,16 @@
   margin-bottom: 1.5rem;
 }
 
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
@@ -44,6 +54,7 @@
   font-size: 1rem;
   color: #667b68; /* Color 5 for text */
   background-color: #fceee9; /* Color 2 for input backgrounds */
+  box-sizing: border-box;
 }
 
 .form-group input:focus,
@@ -111,4 +122,23 @@
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .form-row .form-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  .create-trip-page {
+    padding: 1rem;
+  }
+  
+  .create-trip-container {
+    padding: 1rem;
+  }
 }

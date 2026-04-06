@@ -1,20 +1,43 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCreateRoute } from '@/shared/api/hooks/routes';
+import type { CreateRouteRequest } from '@/shared/api/types/routes';
 import './CreateTrip.css';
 
 const CreateTripPage: React.FC = () => {
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [locations, setLocations] = useState<string[]>([]);
+  const [city, setCity] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [preferences, setPreferences] = useState('');
   const navigate = useNavigate();
   const { mutate: createRoute, isPending, isError, error } = useCreateRoute();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Преобразуем даты в нужный формат
+    const formattedStartDate = startDate ? new Date(startDate).toISOString().split('T')[0] : '';
+    const formattedEndDate = endDate ? new Date(endDate).toISOString().split('T')[0] : '';
+    
+    // Преобразуем предпочтения в массив location_ids (заглушка)
+    const locationIds = preferences ? preferences.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id)) : [];
+    
+    // Создаем объект items для отправки на бэкенд
+    const items = locationIds.map((locationId, index) => ({
+      location_id: locationId,
+      day_number: 1,
+      order_in_day: index + 1
+    }));
+    
     createRoute(
-      { name, description, locations },
+      { 
+        name, 
+        city,
+        start_date: formattedStartDate,
+        end_date: formattedEndDate,
+        items
+      } as CreateRouteRequest,
       {
         onSuccess: () => {
           navigate('/dashboard');
@@ -49,27 +72,55 @@ const CreateTripPage: React.FC = () => {
           </div>
           
           <div className="form-group">
-            <label htmlFor="description">Description</label>
-            <textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
+            <label htmlFor="city">City</label>
+            <input
+              type="text"
+              id="city"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              required
               className={isError ? 'error' : ''}
             />
           </div>
           
-          <div className="form-group">
-            <label htmlFor="locations">Locations</label>
-            <input
-              type="text"
-              id="locations"
-              placeholder="Enter location IDs separated by commas"
-              value={locations.join(', ')}
-              onChange={(e) => setLocations(e.target.value.split(',').map(id => id.trim()).filter(id => id))}
-            />
-            <p className="form-help">Enter location IDs separated by commas (e.g., 1, 2, 3)</p>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="start-date">Start Date</label>
+              <input
+                type="date"
+                id="start-date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                required
+                className={isError ? 'error' : ''}
+              />
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="end-date">End Date</label>
+              <input
+                type="date"
+                id="end-date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                required
+                className={isError ? 'error' : ''}
+              />
+            </div>
           </div>
+          
+<div className="form-group">
+              <label htmlFor="preferences">Preferences</label>
+              <textarea
+                id="preferences"
+                value={preferences}
+                onChange={(e) => setPreferences(e.target.value)}
+                placeholder="Enter location IDs separated by commas (e.g., 1, 2, 3)"
+                rows={4}
+                className={isError ? 'error' : ''}
+              />
+              <p className="form-help">Enter location IDs separated by commas</p>
+            </div>
           
           {isError && (
             <div className="error-message">

@@ -38,44 +38,46 @@ class ApiLocationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ApiRouteItem(BaseModel):
+    location_id: int = Field(gt=0)
+    day_number: int = Field(gt=0)
+    order_in_day: int = Field(gt=0)
+
+
 class ApiRouteCreate(BaseModel):
     name: str
-    cities: list[str] = Field(min_length=1)
-    startDate: date
-    endDate: date
-    preferences: str = ""
-    locations: list[str] = Field(default_factory=list)
+    city: str
+    start_date: date
+    end_date: date
+    items: list[ApiRouteItem] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_dates(self):
-        if self.startDate > self.endDate:
-            raise ValueError("startDate must be before or equal to endDate")
+        if self.start_date > self.end_date:
+            raise ValueError("start_date must be before or equal to end_date")
         return self
 
 
 class ApiRouteUpdate(BaseModel):
     name: Optional[str] = None
-    cities: Optional[list[str]] = None
-    startDate: Optional[date] = None
-    endDate: Optional[date] = None
-    preferences: Optional[str] = None
-    locations: Optional[list[str]] = None
+    city: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    items: Optional[list[ApiRouteItem]] = None
 
     @model_validator(mode="after")
     def validate_dates(self):
-        if self.startDate and self.endDate and self.startDate > self.endDate:
-            raise ValueError("startDate must be before or equal to endDate")
+        if self.start_date and self.end_date and self.start_date > self.end_date:
+            raise ValueError("start_date must be before or equal to end_date")
         return self
 
 
 class ApiRouteResponse(BaseModel):
     id: str
     name: str
-    cities: list[str]
-    startDate: str
-    endDate: str
-    preferences: str
-    locations: list[str]
+    city: str
+    start_date: str
+    end_date: str
     userId: str
     createdAt: str
     updatedAt: str
@@ -86,22 +88,18 @@ class ApiRouteResponse(BaseModel):
         route_id: int,
         user_id: int,
         name: str,
-        cities: list[str],
+        city: str,
         start_date: date,
         end_date: date,
-        preferences: str,
         created_at: datetime,
-        location_ids: list[int],
     ) -> "ApiRouteResponse":
         created = created_at.isoformat()
         return cls(
             id=str(route_id),
             name=name,
-            cities=cities,
-            startDate=start_date.isoformat(),
-            endDate=end_date.isoformat(),
-            preferences=preferences,
-            locations=[str(location_id) for location_id in location_ids],
+            city=city,
+            start_date=start_date.isoformat(),
+            end_date=end_date.isoformat(),
             userId=str(user_id),
             createdAt=created,
             updatedAt=created,

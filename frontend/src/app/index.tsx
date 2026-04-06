@@ -5,6 +5,9 @@ import LoginPage from '@/pages/login';
 import RegisterPage from '@/pages/register';
 import DashboardPage from '@/pages/dashboard';
 import CreateTripPage from '@/pages/create-trip';
+import ProfilePage from '@/pages/profile';
+import AccountPage from '@/pages/account';
+import TripConfirmationPage from '@/pages/trip-confirmation';
 
 function App() {
   return (
@@ -18,6 +21,9 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/create-trip" element={<CreateTripPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/account" element={<AccountPage />} />
+            <Route path="/trip-confirmation" element={<TripConfirmationPage />} />
           </Routes>
         </main>
       </div>

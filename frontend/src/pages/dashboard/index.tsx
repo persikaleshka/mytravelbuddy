@@ -52,10 +52,10 @@ const DashboardPage: React.FC = () => {
           {routes.map((route) => (
             <div key={route.id} className="route-card">
               <h3>{route.name}</h3>
-              <p>{route.description}</p>
+              <p>City: {route.city}</p>
               <div className="route-meta">
-                <span>Created: {new Date(route.createdAt).toLocaleDateString()}</span>
-                <span>Locations: {route.locations.length}</span>
+                <span>Start: {route.start_date}</span>
+                <span>End: {route.end_date}</span>
               </div>
             </div>
           ))}

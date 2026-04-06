@@ -11,6 +11,8 @@ export const useLogin = () => {
     onSuccess: (data) => {
       
       localStorage.setItem('token', data.token);
+      localStorage.setItem('userName', data.user.name);
+      localStorage.setItem('userEmail', data.user.email);
       
       queryClient.invalidateQueries({ queryKey: ['user'] });
     },
@@ -26,6 +28,8 @@ export const useRegister = () => {
     onSuccess: (data) => {
       
       localStorage.setItem('token', data.token);
+      localStorage.setItem('userName', data.user.name);
+      localStorage.setItem('userEmail', data.user.email);
       
       queryClient.invalidateQueries({ queryKey: ['user'] });
     },
