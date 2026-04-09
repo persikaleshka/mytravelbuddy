@@ -7,18 +7,56 @@ from .schemas import ApiRouteCreate, ApiRouteResponse, ApiRouteUpdate
 router = APIRouter()
 
 
-def _validate_locations_exist(location_ids: set[int], db: Session):
+def _get_existing_location_ids(location_ids: set[int], db: Session) -> set[int]:
     if not location_ids:
-        return
+        return set()
     existing_locations = (
         db.query(models.Location.id).filter(models.Location.id.in_(location_ids)).all()
     )
-    existing_location_ids = {location_id for (location_id,) in existing_locations}
-    missing_ids = sorted(location_ids - existing_location_ids)
-    if missing_ids:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unknown location_id values: {missing_ids}",
+    return {location_id for (location_id,) in existing_locations}
+
+
+def _ensure_user_preferences(user: models.User, db: Session) -> models.UserPreference:
+    if user.preferences is not None:
+        return user.preferences
+    pref = models.UserPreference(
+        user_id=user.id,
+        interests="",
+        budget=0.0,
+        travel_style="relaxed",
+    )
+    db.add(pref)
+    db.flush()
+    return pref
+
+
+def _save_preferences_from_items(
+    user: models.User,
+    items: list,
+    db: Session,
+):
+    pref = _ensure_user_preferences(user, db)
+    pref.interests = ",".join(str(item.location_id) for item in items)
+
+
+def _sync_route_items(
+    route_id: int,
+    items: list,
+    db: Session,
+):
+    submitted_ids = [item.location_id for item in items]
+    existing_location_ids = _get_existing_location_ids(set(submitted_ids), db)
+
+    for item in items:
+        if item.location_id not in existing_location_ids:
+            continue
+        db.add(
+            models.RouteItem(
+                route_id=route_id,
+                location_id=item.location_id,
+                day_number=item.day_number,
+                order_in_day=item.order_in_day,
+            )
         )
 
 
@@ -40,9 +78,6 @@ async def create_route(
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(database.get_db),
 ):
-    location_ids = {item.location_id for item in route_data.items}
-    _validate_locations_exist(location_ids, db)
-
     try:
         db_route = models.TravelRoute(
             user_id=current_user.id,
@@ -54,15 +89,8 @@ async def create_route(
         db.add(db_route)
         db.flush()
 
-        for item in route_data.items:
-            db.add(
-                models.RouteItem(
-                    route_id=db_route.id,
-                    location_id=item.location_id,
-                    day_number=item.day_number,
-                    order_in_day=item.order_in_day,
-                )
-            )
+        _save_preferences_from_items(current_user, route_data.items, db)
+        _sync_route_items(db_route.id, route_data.items, db)
         db.commit()
         db.refresh(db_route)
     except Exception:
@@ -137,21 +165,11 @@ async def update_route(
         )
 
     if payload.items is not None:
-        location_ids = {item.location_id for item in payload.items}
-        _validate_locations_exist(location_ids, db)
-
         db.query(models.RouteItem).filter(models.RouteItem.route_id == route.id).delete(
             synchronize_session=False
         )
-        for item in payload.items:
-            db.add(
-                models.RouteItem(
-                    route_id=route.id,
-                    location_id=item.location_id,
-                    day_number=item.day_number,
-                    order_in_day=item.order_in_day,
-                )
-            )
+        _save_preferences_from_items(current_user, payload.items, db)
+        _sync_route_items(route.id, payload.items, db)
 
     db.commit()
     db.refresh(route)
