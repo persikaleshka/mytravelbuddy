@@ -13,6 +13,7 @@ class User(Base):
     
     preferences = relationship("UserPreference", back_populates="user", uselist=False)
     routes = relationship("TravelRoute", back_populates="user")
+    chat_messages = relationship("ChatMessage", back_populates="user")
 
 class UserPreference(Base):
     __tablename__ = "user_preferences"
@@ -46,6 +47,11 @@ class TravelRoute(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     user = relationship("User", back_populates="routes")
     items = relationship("RouteItem", back_populates="route")
+    chat_messages = relationship(
+        "ChatMessage",
+        back_populates="route",
+        cascade="all, delete-orphan",
+    )
 
 class RouteItem(Base):
     __tablename__ = "route_items"
@@ -56,3 +62,16 @@ class RouteItem(Base):
     order_in_day = Column(Integer, nullable=False)
     route = relationship("TravelRoute", back_populates="items")
     location = relationship("Location")
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    id = Column(Integer, primary_key=True)
+    route_id = Column(Integer, ForeignKey("travel_routes.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    sender = Column(String, nullable=False)  # "user" | "assistant"
+    text = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    route = relationship("TravelRoute", back_populates="chat_messages")
+    user = relationship("User", back_populates="chat_messages")

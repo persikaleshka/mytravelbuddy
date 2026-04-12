@@ -98,8 +98,12 @@ class ApiRouteResponse(BaseModel):
             id=str(route_id),
             name=name,
             city=city,
-            start_date=start_date.isoformat(),
-            end_date=end_date.isoformat(),
+            start_date=start_date.isoformat()
+            if hasattr(start_date, "isoformat")
+            else str(start_date),
+            end_date=end_date.isoformat()
+            if hasattr(end_date, "isoformat")
+            else str(end_date),
             userId=str(user_id),
             createdAt=created,
             updatedAt=created,
@@ -126,3 +130,68 @@ class ApiProfileUpdate(BaseModel):
         self.preferences = [value.strip() for value in self.preferences if value.strip()]
         self.travel_style = list(dict.fromkeys(self.travel_style))
         return self
+
+
+ChatSender = Literal["user", "assistant"]
+
+
+class ApiChatMessageCreate(BaseModel):
+    text: str = Field(min_length=1, max_length=4000)
+
+    @model_validator(mode="after")
+    def normalize(self):
+        self.text = self.text.strip()
+        if not self.text:
+            raise ValueError("Message text cannot be empty")
+        return self
+
+
+class ApiChatMessageResponse(BaseModel):
+    id: str
+    routeId: str
+    userId: str
+    sender: ChatSender
+    text: str
+    createdAt: str
+
+    @classmethod
+    def from_db(
+        cls,
+        message_id: int,
+        route_id: int,
+        user_id: int,
+        sender: str,
+        text: str,
+        created_at: datetime,
+    ) -> "ApiChatMessageResponse":
+        return cls(
+            id=str(message_id),
+            routeId=str(route_id),
+            userId=str(user_id),
+            sender=sender,  # type: ignore[arg-type]
+            text=text,
+            createdAt=created_at.isoformat(),
+        )
+
+
+class ApiChatSendResponse(BaseModel):
+    user_message: ApiChatMessageResponse
+    assistant_message: ApiChatMessageResponse
+
+
+class ApiRoutePointResponse(BaseModel):
+    location_id: str
+    name: str
+    category: str
+    latitude: float
+    longitude: float
+    day_number: int
+    order_in_day: int
+
+
+class ApiRoutePageResponse(BaseModel):
+    route: ApiRouteResponse
+    preferences: list[str]
+    route_points: list[ApiRoutePointResponse]
+    weather: dict
+    tickets: list[dict]

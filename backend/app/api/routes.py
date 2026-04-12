@@ -2,9 +2,33 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models
-from .schemas import ApiRouteCreate, ApiRouteResponse, ApiRouteUpdate
+from .schemas import (
+    ApiRouteCreate,
+    ApiRoutePageResponse,
+    ApiRoutePointResponse,
+    ApiRouteResponse,
+    ApiRouteUpdate,
+)
 
 router = APIRouter()
+
+
+def _get_owned_route(
+    route_id: int,
+    current_user: models.User,
+    db: Session,
+) -> models.TravelRoute:
+    route = (
+        db.query(models.TravelRoute)
+        .filter(
+            models.TravelRoute.id == route_id,
+            models.TravelRoute.user_id == current_user.id,
+        )
+        .first()
+    )
+    if route is None:
+        raise HTTPException(status_code=404, detail="Route not found")
+    return route
 
 
 def _get_existing_location_ids(location_ids: set[int], db: Session) -> set[int]:
@@ -118,17 +142,57 @@ async def get_route(
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(database.get_db),
 ):
-    route = (
-        db.query(models.TravelRoute)
-        .filter(
-            models.TravelRoute.id == route_id,
-            models.TravelRoute.user_id == current_user.id,
-        )
-        .first()
-    )
-    if route is None:
-        raise HTTPException(status_code=404, detail="Route not found")
+    route = _get_owned_route(route_id, current_user, db)
     return _serialize_route(route)
+
+
+@router.get("/routes/{route_id}/page", response_model=ApiRoutePageResponse)
+async def get_route_page(
+    route_id: int,
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(database.get_db),
+):
+    route = _get_owned_route(route_id, current_user, db)
+    sorted_items = sorted(route.items, key=lambda item: (item.day_number, item.order_in_day))
+
+    route_points = []
+    for item in sorted_items:
+        if item.location is None:
+            continue
+        route_points.append(
+            ApiRoutePointResponse(
+                location_id=str(item.location_id),
+                name=item.location.name,
+                category=item.location.category,
+                latitude=item.location.latitude,
+                longitude=item.location.longitude,
+                day_number=item.day_number,
+                order_in_day=item.order_in_day,
+            )
+        )
+
+    preferences: list[str] = []
+    if current_user.preferences and current_user.preferences.interests:
+        preferences = [
+            value.strip()
+            for value in current_user.preferences.interests.split(",")
+            if value.strip()
+        ]
+
+    # Placeholders for frontend blocks until external integrations are added.
+    weather = {
+        "status": "not_configured",
+        "message": "Weather integration is not configured yet",
+    }
+    tickets: list[dict] = []
+
+    return ApiRoutePageResponse(
+        route=_serialize_route(route),
+        preferences=preferences,
+        route_points=route_points,
+        weather=weather,
+        tickets=tickets,
+    )
 
 
 @router.put("/routes/{route_id}", response_model=ApiRouteResponse)
@@ -138,16 +202,7 @@ async def update_route(
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(database.get_db),
 ):
-    route = (
-        db.query(models.TravelRoute)
-        .filter(
-            models.TravelRoute.id == route_id,
-            models.TravelRoute.user_id == current_user.id,
-        )
-        .first()
-    )
-    if route is None:
-        raise HTTPException(status_code=404, detail="Route not found")
+    route = _get_owned_route(route_id, current_user, db)
 
     if payload.name is not None:
         route.name = payload.name
@@ -182,16 +237,7 @@ async def delete_route(
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(database.get_db),
 ):
-    route = (
-        db.query(models.TravelRoute)
-        .filter(
-            models.TravelRoute.id == route_id,
-            models.TravelRoute.user_id == current_user.id,
-        )
-        .first()
-    )
-    if route is None:
-        raise HTTPException(status_code=404, detail="Route not found")
+    route = _get_owned_route(route_id, current_user, db)
 
     db.query(models.RouteItem).filter(models.RouteItem.route_id == route.id).delete(
         synchronize_session=False
