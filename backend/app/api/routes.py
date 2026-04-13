@@ -2,23 +2,85 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models
-from .schemas import ApiRouteCreate, ApiRouteResponse, ApiRouteUpdate
+from .schemas import (
+    ApiRouteCreate,
+    ApiRoutePageResponse,
+    ApiRoutePointResponse,
+    ApiRouteResponse,
+    ApiRouteUpdate,
+)
 
 router = APIRouter()
 
 
-def _validate_locations_exist(location_ids: set[int], db: Session):
+def _get_owned_route(
+    route_id: int,
+    current_user: models.User,
+    db: Session,
+) -> models.TravelRoute:
+    route = (
+        db.query(models.TravelRoute)
+        .filter(
+            models.TravelRoute.id == route_id,
+            models.TravelRoute.user_id == current_user.id,
+        )
+        .first()
+    )
+    if route is None:
+        raise HTTPException(status_code=404, detail="Route not found")
+    return route
+
+
+def _get_existing_location_ids(location_ids: set[int], db: Session) -> set[int]:
     if not location_ids:
-        return
+        return set()
     existing_locations = (
         db.query(models.Location.id).filter(models.Location.id.in_(location_ids)).all()
     )
-    existing_location_ids = {location_id for (location_id,) in existing_locations}
-    missing_ids = sorted(location_ids - existing_location_ids)
-    if missing_ids:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unknown location_id values: {missing_ids}",
+    return {location_id for (location_id,) in existing_locations}
+
+
+def _ensure_user_preferences(user: models.User, db: Session) -> models.UserPreference:
+    if user.preferences is not None:
+        return user.preferences
+    pref = models.UserPreference(
+        user_id=user.id,
+        interests="",
+        budget=0.0,
+        travel_style="relaxed",
+    )
+    db.add(pref)
+    db.flush()
+    return pref
+
+
+def _save_preferences_from_items(
+    user: models.User,
+    items: list,
+    db: Session,
+):
+    pref = _ensure_user_preferences(user, db)
+    pref.interests = ",".join(str(item.location_id) for item in items)
+
+
+def _sync_route_items(
+    route_id: int,
+    items: list,
+    db: Session,
+):
+    submitted_ids = [item.location_id for item in items]
+    existing_location_ids = _get_existing_location_ids(set(submitted_ids), db)
+
+    for item in items:
+        if item.location_id not in existing_location_ids:
+            continue
+        db.add(
+            models.RouteItem(
+                route_id=route_id,
+                location_id=item.location_id,
+                day_number=item.day_number,
+                order_in_day=item.order_in_day,
+            )
         )
 
 
@@ -40,9 +102,6 @@ async def create_route(
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(database.get_db),
 ):
-    location_ids = {item.location_id for item in route_data.items}
-    _validate_locations_exist(location_ids, db)
-
     try:
         db_route = models.TravelRoute(
             user_id=current_user.id,
@@ -54,15 +113,8 @@ async def create_route(
         db.add(db_route)
         db.flush()
 
-        for item in route_data.items:
-            db.add(
-                models.RouteItem(
-                    route_id=db_route.id,
-                    location_id=item.location_id,
-                    day_number=item.day_number,
-                    order_in_day=item.order_in_day,
-                )
-            )
+        _save_preferences_from_items(current_user, route_data.items, db)
+        _sync_route_items(db_route.id, route_data.items, db)
         db.commit()
         db.refresh(db_route)
     except Exception:
@@ -90,17 +142,57 @@ async def get_route(
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(database.get_db),
 ):
-    route = (
-        db.query(models.TravelRoute)
-        .filter(
-            models.TravelRoute.id == route_id,
-            models.TravelRoute.user_id == current_user.id,
-        )
-        .first()
-    )
-    if route is None:
-        raise HTTPException(status_code=404, detail="Route not found")
+    route = _get_owned_route(route_id, current_user, db)
     return _serialize_route(route)
+
+
+@router.get("/routes/{route_id}/page", response_model=ApiRoutePageResponse)
+async def get_route_page(
+    route_id: int,
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(database.get_db),
+):
+    route = _get_owned_route(route_id, current_user, db)
+    sorted_items = sorted(route.items, key=lambda item: (item.day_number, item.order_in_day))
+
+    route_points = []
+    for item in sorted_items:
+        if item.location is None:
+            continue
+        route_points.append(
+            ApiRoutePointResponse(
+                location_id=str(item.location_id),
+                name=item.location.name,
+                category=item.location.category,
+                latitude=item.location.latitude,
+                longitude=item.location.longitude,
+                day_number=item.day_number,
+                order_in_day=item.order_in_day,
+            )
+        )
+
+    preferences: list[str] = []
+    if current_user.preferences and current_user.preferences.interests:
+        preferences = [
+            value.strip()
+            for value in current_user.preferences.interests.split(",")
+            if value.strip()
+        ]
+
+    # Placeholders for frontend blocks until external integrations are added.
+    weather = {
+        "status": "not_configured",
+        "message": "Weather integration is not configured yet",
+    }
+    tickets: list[dict] = []
+
+    return ApiRoutePageResponse(
+        route=_serialize_route(route),
+        preferences=preferences,
+        route_points=route_points,
+        weather=weather,
+        tickets=tickets,
+    )
 
 
 @router.put("/routes/{route_id}", response_model=ApiRouteResponse)
@@ -110,16 +202,7 @@ async def update_route(
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(database.get_db),
 ):
-    route = (
-        db.query(models.TravelRoute)
-        .filter(
-            models.TravelRoute.id == route_id,
-            models.TravelRoute.user_id == current_user.id,
-        )
-        .first()
-    )
-    if route is None:
-        raise HTTPException(status_code=404, detail="Route not found")
+    route = _get_owned_route(route_id, current_user, db)
 
     if payload.name is not None:
         route.name = payload.name
@@ -137,21 +220,11 @@ async def update_route(
         )
 
     if payload.items is not None:
-        location_ids = {item.location_id for item in payload.items}
-        _validate_locations_exist(location_ids, db)
-
         db.query(models.RouteItem).filter(models.RouteItem.route_id == route.id).delete(
             synchronize_session=False
         )
-        for item in payload.items:
-            db.add(
-                models.RouteItem(
-                    route_id=route.id,
-                    location_id=item.location_id,
-                    day_number=item.day_number,
-                    order_in_day=item.order_in_day,
-                )
-            )
+        _save_preferences_from_items(current_user, payload.items, db)
+        _sync_route_items(route.id, payload.items, db)
 
     db.commit()
     db.refresh(route)
@@ -164,16 +237,7 @@ async def delete_route(
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(database.get_db),
 ):
-    route = (
-        db.query(models.TravelRoute)
-        .filter(
-            models.TravelRoute.id == route_id,
-            models.TravelRoute.user_id == current_user.id,
-        )
-        .first()
-    )
-    if route is None:
-        raise HTTPException(status_code=404, detail="Route not found")
+    route = _get_owned_route(route_id, current_user, db)
 
     db.query(models.RouteItem).filter(models.RouteItem.route_id == route.id).delete(
         synchronize_session=False
