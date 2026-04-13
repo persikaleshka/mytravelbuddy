@@ -15,12 +15,20 @@ const TripConfirmationPage: React.FC = () => {
         <div className="confirmation-content">
           <h1>Trip Created Successfully!</h1>
           <p>Your trip has been created and saved to your account.</p>
-          <button 
-            className="btn btn-primary"
-            onClick={handleViewTrips}
-          >
-            View My Trips
-          </button>
+          <div className="confirmation-actions">
+            <button 
+              className="btn btn-outline"
+              onClick={handleViewTrips}
+            >
+              View All Trips
+            </button>
+            <button 
+              className="btn btn-primary"
+              onClick={() => navigate('/create-trip')}
+            >
+              Create Another Trip
+            </button>
+          </div>
         </div>
       </div>
     </div>

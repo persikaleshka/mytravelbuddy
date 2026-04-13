@@ -30,6 +30,13 @@
   color: #667b68; /* Color 5 for text */
 }
 
+.confirmation-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
 .btn {
   padding: 0.75rem 1.5rem;
   border: none;
@@ -50,5 +57,16 @@
 
 .btn-primary:hover {
   background-color: #f8d3c5; /* Color 1 for hover state */
+  color: #667b68; /* Color 5 for text */
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 2px solid #fceee9; /* Color 2 for buttons */
+  color: #667b68; /* Color 5 for text */
+}
+
+.btn-outline:hover {
+  background-color: #fceee9; /* Color 2 for buttons */
   color: #667b68; /* Color 5 for text */
 }

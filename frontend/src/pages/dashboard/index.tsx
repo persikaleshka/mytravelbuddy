@@ -11,6 +11,10 @@ const DashboardPage: React.FC = () => {
     navigate('/create-trip');
   };
 
+  const handleViewTrip = (id: string) => {
+    navigate(`/trip/${id}`);
+  };
+
   return (
     <div className="dashboard-page">
       <div className="dashboard-header">
@@ -50,7 +54,11 @@ const DashboardPage: React.FC = () => {
       {routes && routes.length > 0 && (
         <div className="routes-list">
           {routes.map((route) => (
-            <div key={route.id} className="route-card">
+            <div 
+              key={route.id} 
+              className="route-card"
+              onClick={() => handleViewTrip(route.id)}
+            >
               <h3>{route.name}</h3>
               <p>City: {route.city}</p>
               <div className="route-meta">

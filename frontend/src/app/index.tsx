@@ -8,6 +8,7 @@ import CreateTripPage from '@/pages/create-trip';
 import ProfilePage from '@/pages/profile';
 import AccountPage from '@/pages/account';
 import TripConfirmationPage from '@/pages/trip-confirmation';
+import TripChatPage from '@/pages/trip-chat';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/account" element={<AccountPage />} />
             <Route path="/trip-confirmation" element={<TripConfirmationPage />} />
+            <Route path="/trip/:id" element={<TripChatPage />} />
           </Routes>
         </main>
       </div>

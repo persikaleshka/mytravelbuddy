@@ -39,8 +39,8 @@ const CreateTripPage: React.FC = () => {
         items
       } as CreateRouteRequest,
       {
-        onSuccess: () => {
-          navigate('/dashboard');
+        onSuccess: (createdRoute) => {
+          navigate(`/trip/${createdRoute.id}`);
         },
         onError: (err) => {
           console.error('Failed to create trip:', err);
