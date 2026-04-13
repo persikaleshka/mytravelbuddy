@@ -136,21 +136,40 @@ Create route.
 Request:
 {
   "name": "Weekend in Moscow",
-  "description": "City center walk",
-  "locations": ["1", "2", "3"]
+  "city": "Moscow",
+  "start_date": "2026-05-01",
+  "end_date": "2026-05-03",
+  "items": [
+    {
+      "location_id": 1,
+      "day_number": 1,
+      "order_in_day": 1
+    },
+    {
+      "location_id": 2,
+      "day_number": 1,
+      "order_in_day": 2
+    },
+    {
+      "location_id": 3,
+      "day_number": 2,
+      "order_in_day": 1
+    }
+  ]
 }
 Success 200:
 {
   "id": "10",
   "name": "Weekend in Moscow",
-  "description": "City center walk",
-  "locations": ["1", "2", "3"],
+  "city": "Moscow",
+  "start_date": "2026-05-01",
+  "end_date": "2026-05-03",
   "userId": "1",
   "createdAt": "2026-04-04T17:00:00.000000",
   "updatedAt": "2026-04-04T17:00:00.000000"
 }
 Errors:
-- 400 invalid location id or unknown location id
+- 400 start_date must be before or equal to end_date
 - 401 invalid or missing token
 - 422 validation error
 
@@ -162,8 +181,9 @@ Success 200:
   {
     "id": "10",
     "name": "Weekend in Moscow",
-    "description": "City center walk",
-    "locations": ["1", "2", "3"],
+    "city": "Moscow",
+    "start_date": "2026-05-01",
+    "end_date": "2026-05-03",
     "userId": "1",
     "createdAt": "2026-04-04T17:00:00.000000",
     "updatedAt": "2026-04-04T17:00:00.000000"
@@ -190,13 +210,31 @@ Update route fields.
 Request (any subset):
 {
   "name": "Weekend updated",
-  "description": "New notes",
-  "locations": ["3", "2", "1"]
+  "city": "Moscow",
+  "start_date": "2026-05-01",
+  "end_date": "2026-05-04",
+  "items": [
+    {
+      "location_id": 3,
+      "day_number": 1,
+      "order_in_day": 1
+    },
+    {
+      "location_id": 2,
+      "day_number": 1,
+      "order_in_day": 2
+    },
+    {
+      "location_id": 1,
+      "day_number": 2,
+      "order_in_day": 1
+    }
+  ]
 }
 Success 200: updated route object.
 
 Errors:
-- 400 invalid/unknown location id
+- 400 start_date must be before or equal to end_date
 - 401 invalid or missing token
 - 404 route not found
 - 422 validation error
@@ -229,3 +267,39 @@ Not implemented yet, should be added in next contract version:
 - Chat/messages API
 - Weather API integration
 - Tickets API integration
+
+## 6) Additional Route Endpoints
+
+### GET /api/routes/{route_id}/page
+Get complete route information including points, preferences, weather and tickets.
+
+Success 200:
+{
+  "route": {
+    "id": "10",
+    "name": "Weekend in Moscow",
+    "city": "Moscow",
+    "start_date": "2026-05-01",
+    "end_date": "2026-05-03",
+    "userId": "1",
+    "createdAt": "2026-04-04T17:00:00.000000",
+    "updatedAt": "2026-04-04T17:00:00.000000"
+  },
+  "preferences": ["museum", "cafe"],
+  "route_points": [
+    {
+      "location_id": "1",
+      "name": "Tretyakov Gallery",
+      "category": "museum",
+      "latitude": 55.7414,
+      "longitude": 37.6208,
+      "day_number": 1,
+      "order_in_day": 1
+    }
+  ],
+  "weather": {
+    "status": "not_configured",
+    "message": "Weather integration is not configured yet"
+  },
+  "tickets": []
+}

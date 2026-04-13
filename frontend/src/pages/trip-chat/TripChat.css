@@ -43,9 +43,15 @@
 }
 
 .trip-info-header h1 {
-  margin: 0;
+  margin: 0 0 5px 0;
   font-size: 24px;
   color: #667b68; /* Color 5 for text */
+}
+
+.trip-info-header p {
+  margin: 0;
+  color: #667b68; /* Color 5 for text */
+  font-size: 14px;
 }
 
 .main-content {
@@ -66,11 +72,21 @@
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: calc(100vh - 200px); /* Fixed height for chat container */
   background-color: white;
   margin: 0 0 20px 0;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden; /* Hide overflow */
+}
+
+.messages-container {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto; /* Scroll only within messages container */
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .chat-header {
@@ -182,20 +198,113 @@
   width: 50%;
   background: #dde6d5; /* Same as body background */
   padding: 20px;
-  overflow-y: auto;
   box-sizing: border-box;
+  height: calc(100vh - 120px); /* Fixed height */
 }
 
 .trip-content-inner {
   background-color: white;
   border-radius: 8px;
   padding: 20px;
-  height: 100%;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.trip-content-inner h2 {
-  margin-top: 0;
+.map-section, .route-points-section, .weather-section {
+  margin-bottom: 30px;
+}
+
+.map-section h3, .route-points-section h3, .weather-section h3 {
+  color: #667b68;
+  margin-bottom: 15px;
+}
+
+.map-placeholder {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  min-height: 200px;
+}
+
+.map-container {
+  position: relative;
+  height: 200px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  margin-top: 10px;
+}
+
+.map-marker {
+  position: absolute;
+  font-size: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.route-points-list {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.route-point-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.route-point-item:last-child {
+  border-bottom: none;
+}
+
+.point-icon {
+  width: 30px;
+  height: 30px;
+  background-color: #667b68;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 15px;
+}
+
+.point-details h4 {
+  margin: 0 0 5px 0;
+  color: #667b68;
+}
+
+.point-details p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.weather-placeholder {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.weather-content {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 15px;
+}
+
+.weather-day {
+  text-align: center;
+}
+
+.weather-icon {
+  font-size: 24px;
+  margin: 10px 0;
+}
+
+.weather-day p {
+  margin: 5px 0;
   color: #667b68;
 }
 
