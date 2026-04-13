@@ -38,7 +38,15 @@ const TripChatPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="trip-chat-page">
-        <div className="trip-chat-container">
+        <div className="trip-header">
+          <button onClick={handleBack} className="back-button">
+            ← Back to Trips
+          </button>
+          <div className="trip-info-header">
+            <h1>{route?.name || 'Trip'}</h1>
+          </div>
+        </div>
+        <div className="main-content">
           <div className="trip-sidebar">
             <div className="loading">Loading trip details...</div>
           </div>
@@ -50,13 +58,18 @@ const TripChatPage: React.FC = () => {
   if (isRouteError) {
     return (
       <div className="trip-chat-page">
-        <div className="trip-chat-container">
+        <div className="trip-header">
+          <button onClick={handleBack} className="back-button">
+            ← Back to Trips
+          </button>
+          <div className="trip-info-header">
+            <h1>{route?.name || 'Trip'}</h1>
+          </div>
+        </div>
+        <div className="main-content">
           <div className="trip-sidebar">
             <div className="error">
               Error loading trip: {routeError?.message || 'Unknown error'}
-              <button onClick={handleBack} className="back-button">
-                Back to Trips
-              </button>
             </div>
           </div>
         </div>
@@ -66,20 +79,21 @@ const TripChatPage: React.FC = () => {
 
   return (
     <div className="trip-chat-page">
-      <div className="trip-chat-container">
+      <div className="trip-header">
+        <button onClick={handleBack} className="back-button">
+          ← Back to Trips
+        </button>
+        <div className="trip-info-header">
+          <h1>{route?.name || 'Trip'}</h1>
+        </div>
+      </div>
+      
+      <div className="main-content">
         <div className="trip-sidebar">
-          <div className="trip-header">
-            <button onClick={handleBack} className="back-button">
-              ← Back to Trips
-            </button>
-          </div>
-          
-          <div className="trip-info">
-            <h1>{route?.name || 'Trip'}</h1>
-            <p>{route?.city} • {route?.start_date} to {route?.end_date}</p>
-          </div>
-
           <div className="chat-container">
+            <div className="chat-header">
+              Чат с ассистентом
+            </div>
             <div className="messages-container">
               {messages.map((message) => (
                 <div key={message.id} className={`message ${message.sender}`}>
@@ -91,6 +105,10 @@ const TripChatPage: React.FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+            
+            <div className="bottom-chat-window">
+              <p>Дополнительная информация или элементы управления чатом</p>
             </div>
 
             <form onSubmit={handleSendMessage} className="message-input-container">
@@ -114,9 +132,11 @@ const TripChatPage: React.FC = () => {
         </div>
         
         <div className="trip-content">
-          <h2>Trip Details</h2>
-          <p>Here you can display trip details, itinerary, maps, etc.</p>
-          {/* This area can be expanded with more trip-related content */}
+          <div className="trip-content-inner">
+            <h2>Trip Details</h2>
+            <p>Here you can display trip details, itinerary, maps, etc.</p>
+            {/* This area can be expanded with more trip-related content */}
+          </div>
         </div>
       </div>
     </div>

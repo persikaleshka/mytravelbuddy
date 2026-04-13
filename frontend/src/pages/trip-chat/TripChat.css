@@ -3,26 +3,18 @@
   height: 100vh;
   background-color: #dde6d5; /* Color 3 for body background */
   display: flex;
-}
-
-.trip-chat-container {
-  display: flex;
-  width: 100%;
-  height: 100%;
-}
-
-.trip-sidebar {
-  width: 50%;
-  background: white;
-  border-right: 1px solid #eee;
-  display: flex;
   flex-direction: column;
 }
 
 .trip-header {
   padding: 20px;
-  border-bottom: 1px solid #eee;
-  background-color: white;
+  background-color: #dde6d5; /* Same as background */
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
 }
 
 .trip-header .back-button {
@@ -34,6 +26,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  z-index: 1; /* Ensure button is above other elements */
 }
 
 .trip-header .back-button:hover {
@@ -41,27 +34,53 @@
   color: #667b68; /* Color 5 for text */
 }
 
-.trip-info {
-  padding: 20px;
+.trip-info-header {
+  position: absolute;
+  left: 0;
+  right: 0;
   text-align: center;
+  pointer-events: none; /* Allow clicking through to button */
 }
 
-.trip-info h1 {
-  margin: 0 0 5px 0;
+.trip-info-header h1 {
+  margin: 0;
   font-size: 24px;
   color: #667b68; /* Color 5 for text */
 }
 
-.trip-info p {
-  margin: 0;
-  color: #667b68; /* Color 5 for text */
-  font-size: 14px;
+.main-content {
+  display: flex;
+  flex: 1;
+  width: 100%;
+}
+
+.trip-sidebar {
+  width: 50%;
+  background: #dde6d5; /* Same as body background */
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .chat-container {
   display: flex;
   flex-direction: column;
   height: 100%;
+  background-color: white;
+  margin: 0 0 20px 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chat-header {
+  padding: 15px 20px;
+  background-color: white;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+  font-weight: 600;
+  color: #667b68;
+  border-radius: 8px 8px 0 0;
 }
 
 .messages-container {
@@ -121,6 +140,7 @@
   border-top: 1px solid #eee;
   gap: 10px;
   background-color: white;
+  border-radius: 0 0 8px 8px;
 }
 
 .message-input {
@@ -133,8 +153,8 @@
 }
 
 .message-input:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  border-color: #667b68;
+  box-shadow: 0 0 0 2px #667b68;
 }
 
 .send-button {
@@ -159,9 +179,24 @@
 }
 
 .trip-content {
-  flex: 1;
+  width: 50%;
+  background: #dde6d5; /* Same as body background */
   padding: 20px;
   overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.trip-content-inner {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  height: 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.trip-content-inner h2 {
+  margin-top: 0;
+  color: #667b68;
 }
 
 .loading, .error {
@@ -174,8 +209,22 @@
   color: #dc3545;
 }
 
+.bottom-chat-window {
+  border-top: 1px solid #eee;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 0 0 8px 8px;
+}
+
+.bottom-chat-window p {
+  margin: 0;
+  color: #667b68;
+  font-size: 14px;
+  text-align: center;
+}
+
 @media (max-width: 768px) {
-  .trip-chat-container {
+  .main-content {
     flex-direction: column;
   }
   
@@ -185,6 +234,15 @@
   }
   
   .trip-content {
-    display: none;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .chat-container {
+    margin: 0 10px 10px 10px;
+  }
+  
+  .trip-info {
+    margin: 0 10px 10px 10px;
   }
 }
