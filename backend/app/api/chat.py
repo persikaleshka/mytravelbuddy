@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models
+from ..integrations import generate_trip_assistant_reply
 from .schemas import ApiChatMessageCreate, ApiChatMessageResponse, ApiChatSendResponse
 
 router = APIRouter()
@@ -37,11 +38,12 @@ def _to_response(message: models.ChatMessage) -> ApiChatMessageResponse:
 
 
 def _build_assistant_reply(route: models.TravelRoute, user_text: str) -> str:
-    preview = user_text[:120]
-    return (
-        f"Принял сообщение по поездке '{route.name}'. "
-        f"Город: {route.city}. "
-        f"Ключевой запрос: {preview}"
+    return generate_trip_assistant_reply(
+        route_name=route.name,
+        city=route.city,
+        start_date=str(route.start_date),
+        end_date=str(route.end_date),
+        user_text=user_text,
     )
 
 
