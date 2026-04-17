@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models
+from ..integrations import get_city_weather_forecast
 from .schemas import (
     ApiRouteCreate,
     ApiRoutePageResponse,
@@ -96,6 +97,26 @@ def _serialize_route(route: models.TravelRoute) -> ApiRouteResponse:
     )
 
 
+def _build_route_points(route: models.TravelRoute) -> list[ApiRoutePointResponse]:
+    sorted_items = sorted(route.items, key=lambda item: (item.day_number, item.order_in_day))
+    route_points = []
+    for item in sorted_items:
+        if item.location is None:
+            continue
+        route_points.append(
+            ApiRoutePointResponse(
+                location_id=str(item.location_id),
+                name=item.location.name,
+                category=item.location.category,
+                latitude=item.location.latitude,
+                longitude=item.location.longitude,
+                day_number=item.day_number,
+                order_in_day=item.order_in_day,
+            )
+        )
+    return route_points
+
+
 @router.post("/routes", response_model=ApiRouteResponse)
 async def create_route(
     route_data: ApiRouteCreate,
@@ -153,23 +174,7 @@ async def get_route_page(
     db: Session = Depends(database.get_db),
 ):
     route = _get_owned_route(route_id, current_user, db)
-    sorted_items = sorted(route.items, key=lambda item: (item.day_number, item.order_in_day))
-
-    route_points = []
-    for item in sorted_items:
-        if item.location is None:
-            continue
-        route_points.append(
-            ApiRoutePointResponse(
-                location_id=str(item.location_id),
-                name=item.location.name,
-                category=item.location.category,
-                latitude=item.location.latitude,
-                longitude=item.location.longitude,
-                day_number=item.day_number,
-                order_in_day=item.order_in_day,
-            )
-        )
+    route_points = _build_route_points(route)
 
     preferences: list[str] = []
     if current_user.preferences and current_user.preferences.interests:
@@ -179,11 +184,11 @@ async def get_route_page(
             if value.strip()
         ]
 
-    # Placeholders for frontend blocks until external integrations are added.
-    weather = {
-        "status": "not_configured",
-        "message": "Weather integration is not configured yet",
-    }
+    weather = get_city_weather_forecast(
+        city=route.city,
+        start_date=str(route.start_date),
+        end_date=str(route.end_date),
+    )
     tickets: list[dict] = []
 
     return ApiRoutePageResponse(
@@ -193,6 +198,43 @@ async def get_route_page(
         weather=weather,
         tickets=tickets,
     )
+
+
+@router.get("/routes/{route_id}/weather")
+async def get_route_weather(
+    route_id: int,
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(database.get_db),
+):
+    route = _get_owned_route(route_id, current_user, db)
+    return get_city_weather_forecast(
+        city=route.city,
+        start_date=str(route.start_date),
+        end_date=str(route.end_date),
+    )
+
+
+@router.get("/routes/{route_id}/map")
+async def get_route_map_data(
+    route_id: int,
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(database.get_db),
+):
+    route = _get_owned_route(route_id, current_user, db)
+    route_points = _build_route_points(route)
+    center = None
+    if route_points:
+        avg_lat = sum(point.latitude for point in route_points) / len(route_points)
+        avg_lon = sum(point.longitude for point in route_points) / len(route_points)
+        center = {"latitude": avg_lat, "longitude": avg_lon}
+
+    return {
+        "status": "ok",
+        "routeId": str(route.id),
+        "city": route.city,
+        "center": center,
+        "points": [point.model_dump() for point in route_points],
+    }
 
 
 @router.put("/routes/{route_id}", response_model=ApiRouteResponse)
