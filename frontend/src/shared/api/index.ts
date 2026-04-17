@@ -35,3 +35,12 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+
+export * from './auth';
+export * from './locations';
+export * from './routes';
+export * from './chat';
+export * from './weather';
+export * from './map';
+export * from './types';

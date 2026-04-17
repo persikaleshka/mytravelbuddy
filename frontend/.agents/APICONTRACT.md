@@ -265,7 +265,6 @@ They are not part of frontend SPA API contract.
 Not implemented yet, should be added in next contract version:
 - Profile API
 - Chat/messages API
-- Weather API integration
 - Tickets API integration
 
 ## 6) Additional Route Endpoints
@@ -298,8 +297,70 @@ Success 200:
     }
   ],
   "weather": {
-    "status": "not_configured",
-    "message": "Weather integration is not configured yet"
+    "status": "ok",
+    "source": "open-meteo",
+    "message": null,
+    "data": [
+      {
+        "date": "2026-05-01",
+        "temp_max": 22.5,
+        "temp_min": 12.3,
+        "weather_code": 1,
+        "precipitation_sum": 0.0
+      }
+    ],
+    "coords": {
+      "latitude": 55.7558,
+      "longitude": 37.6176
+    }
   },
   "tickets": []
+}
+
+### GET /api/routes/{route_id}/weather
+Get weather forecast for a route.
+
+Success 200:
+{
+  "status": "ok",
+  "source": "open-meteo",
+  "message": null,
+  "data": [
+    {
+      "date": "2026-05-01",
+      "temp_max": 22.5,
+      "temp_min": 12.3,
+      "weather_code": 1,
+      "precipitation_sum": 0.0
+    }
+  ],
+  "coords": {
+    "latitude": 55.7558,
+    "longitude": 37.6176
+  }
+}
+
+### GET /api/routes/{route_id}/map
+Get map data for a route.
+
+Success 200:
+{
+  "status": "ok",
+  "routeId": "10",
+  "city": "Moscow",
+  "center": {
+    "latitude": 55.7558,
+    "longitude": 37.6176
+  },
+  "points": [
+    {
+      "location_id": "1",
+      "name": "Tretyakov Gallery",
+      "category": "museum",
+      "latitude": 55.7414,
+      "longitude": 37.6208,
+      "day_number": 1,
+      "order_in_day": 1
+    }
+  ]
 }

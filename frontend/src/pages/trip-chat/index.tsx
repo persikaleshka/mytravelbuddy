@@ -2,12 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRoute } from '@/shared/api/hooks/routes';
 import { useRouteMessages, useSendRouteMessage } from '@/shared/api/hooks/chat';
+import { useRoutePage } from '@/shared/api/hooks/routes';
+import WeatherDisplay from '@/widgets/weather-display';
+import MapDisplay from '@/widgets/map-display';
 import './TripChat.css';
 
 const TripChatPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: route, isLoading: isRouteLoading, isError: isRouteError, error: routeError } = useRoute(id || '');
+  const { data: routePage, isLoading: isRoutePageLoading } = useRoutePage(id || '');
   const { data: messages = [], isLoading: isMessagesLoading } = useRouteMessages(id || '');
   const { mutate: sendMessage, isPending: isSending } = useSendRouteMessage(id || '');
   const [newMessage, setNewMessage] = useState('');
@@ -69,7 +73,7 @@ const TripChatPage: React.FC = () => {
     navigate('/dashboard');
   };
 
-  const isLoading = isRouteLoading || isMessagesLoading;
+  const isLoading = isRouteLoading || isMessagesLoading || isRoutePageLoading;
 
   if (isLoading) {
     return (
@@ -176,69 +180,48 @@ const TripChatPage: React.FC = () => {
             
             {/* Map Section */}
             <div className="map-section">
-              <h3>Route Map</h3>
-              <div className="map-placeholder">
-                <p>Map will be displayed here</p>
-                <div className="map-container">
-                  {/* Map placeholder content */}
-                  <div className="map-marker" style={{top: '30%', left: '40%'}}>📍</div>
-                  <div className="map-marker" style={{top: '50%', left: '60%'}}>📍</div>
-                  <div className="map-marker" style={{top: '70%', left: '30%'}}>📍</div>
+              {routePage ? (
+                <MapDisplay 
+                  points={routePage.route_points}
+                  center={routePage.weather.coords}
+                  city={routePage.route.city}
+                />
+              ) : (
+                <div className="map-placeholder">
+                  <p>Loading map data...</p>
                 </div>
-              </div>
+              )}
             </div>
             
             {/* Route Points Section */}
             <div className="route-points-section">
               <h3>Route Points</h3>
-              <div className="route-points-list">
-                <div className="route-point-item">
-                  <div className="point-icon">1</div>
-                  <div className="point-details">
-                    <h4>Tretyakov Gallery</h4>
-                    <p>Museum • Moscow</p>
-                  </div>
+              {routePage ? (
+                <div className="route-points-list">
+                  {routePage.route_points.map((point, index) => (
+                    <div key={point.location_id} className="route-point-item">
+                      <div className="point-icon">{index + 1}</div>
+                      <div className="point-details">
+                        <h4>{point.name}</h4>
+                        <p>{point.category} • {routePage.route.city}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="route-point-item">
-                  <div className="point-icon">2</div>
-                  <div className="point-details">
-                    <h4>Red Square</h4>
-                    <p>Historical site • Moscow</p>
-                  </div>
-                </div>
-                <div className="route-point-item">
-                  <div className="point-icon">3</div>
-                  <div className="point-details">
-                    <h4>GUM Department Store</h4>
-                    <p>Shopping • Moscow</p>
-                  </div>
-                </div>
-              </div>
+              ) : (
+                <p>Loading route points...</p>
+              )}
             </div>
             
             {/* Weather Section */}
             <div className="weather-section">
-              <h3>Weather Forecast</h3>
-              <div className="weather-placeholder">
-                <p>Weather information will be displayed here</p>
-                <div className="weather-content">
-                  <div className="weather-day">
-                    <p>Today</p>
-                    <div className="weather-icon">☀️</div>
-                    <p>22°C</p>
-                  </div>
-                  <div className="weather-day">
-                    <p>Tomorrow</p>
-                    <div className="weather-icon">⛅</div>
-                    <p>18°C</p>
-                  </div>
-                  <div className="weather-day">
-                    <p>Day 3</p>
-                    <div className="weather-icon">🌧️</div>
-                    <p>15°C</p>
-                  </div>
+              {routePage ? (
+                <WeatherDisplay weatherData={routePage.weather.data} />
+              ) : (
+                <div className="weather-placeholder">
+                  <p>Loading weather data...</p>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

@@ -1,3 +1,6 @@
+import type { WeatherResponse } from './weather';
+import type { RoutePoint } from './map';
+
 export interface TravelRoute {
   id: string;
   name: string;
@@ -7,6 +10,14 @@ export interface TravelRoute {
   userId: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RoutePageResponse {
+  route: TravelRoute;
+  preferences: string[];
+  route_points: RoutePoint[];
+  weather: WeatherResponse;
+  tickets: any[];
 }
 
 export interface RouteItem {
