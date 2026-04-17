@@ -1,16 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/shared/contexts/auth-context';
 import './Profile.css';
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   
-  // Get user info from localStorage
-  const user = {
-    name: localStorage.getItem('userName') || 'User',
-    email: localStorage.getItem('userEmail') || 'user@example.com'
-  };
-
   // Get account settings from localStorage
   const accountSettings = {
     interests: localStorage.getItem('userInterests') || 'Not set',
@@ -19,12 +15,7 @@ const ProfilePage: React.FC = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userInterests');
-    localStorage.removeItem('userBudget');
-    localStorage.removeItem('userTripStyle');
+    logout();
     navigate('/');
   };
 
@@ -62,11 +53,11 @@ const ProfilePage: React.FC = () => {
         <div className="profile-card">
           <div className="profile-header">
             <div className="profile-avatar">
-              <span>{user.name.charAt(0).toUpperCase()}</span>
+              <span>{user?.name.charAt(0).toUpperCase()}</span>
             </div>
             <div className="profile-info">
-              <h2>{user.name}</h2>
-              <p>{user.email}</p>
+              <h2>{user?.name}</h2>
+              <p>{user?.email}</p>
             </div>
           </div>
           
@@ -88,14 +79,14 @@ const ProfilePage: React.FC = () => {
           
           <div className="profile-actions">
             <button 
-              className="btn btn-outline"
+              className="btn btn-primary"
               onClick={handleAccountSettings}
               style={{ marginRight: '1rem' }}
             >
               Edit
             </button>
             <button 
-              className="btn btn-outline"
+              className="btn btn-primary"
               onClick={handleLogout}
             >
               Logout

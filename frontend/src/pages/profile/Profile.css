@@ -98,25 +98,19 @@
 
 .btn {
   padding: 0.75rem 1.5rem;
-  border-radius: 4px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   border: none;
-  font-size: 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
-.btn-outline {
-  border: 1px solid #a3b899; /* Color 4 for border */
-  background: transparent;
+.btn-primary {
+  background-color: #fceee9; /* Color 2 for buttons */
   color: #667b68; /* Color 5 for text */
 }
 
-.btn-outline:hover {
-  background: #a3b899; /* Color 4 for background */
-  color: #fceee9; /* Color 2 for text */
+.btn-primary:hover {
+  background-color: #f8d3c5; /* Color 1 for hover state */
+  color: #fceee9; /* Color 5 for text */
 }

@@ -88,15 +88,23 @@
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
-.user-btn {
-  background: #667b68; /* Color 5 for background */
-  color: #fceee9; /* Color 2 for text */
-  border: none;
-}
-
-.user-btn:hover {
-  background: #5a6b5a; /* Darker shade for hover */
-  color: #fceee9; /* Color 2 for text */
+@media (max-width: 768px) {
+  .header-container {
+    padding: 0.5rem 1rem;
+  }
+  
+  .header-nav {
+    display: none;
+  }
+  
+  .header-actions {
+    gap: 0.5rem;
+  }
+  
+  .btn {
+    padding: 0.25rem 1rem;
+    font-size: 0.9rem;
+  }
 }
 
 @media (max-width: 768px) {
