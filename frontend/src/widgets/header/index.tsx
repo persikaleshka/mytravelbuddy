@@ -1,11 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/shared/contexts/auth-context';
 import './Header.css';
 
 const Header: React.FC = () => {
-  // For now, we'll implement a simple check for token
-  // In a real app, this would be handled by an auth context or hook
-  const isAuthenticated = !!localStorage.getItem('token');
+  const { isAuthenticated } = useAuth();
 
   return (
     <header className="header">
@@ -21,7 +20,7 @@ const Header: React.FC = () => {
               <Link to="/dashboard" className="btn btn-outline">
                 All Trips
               </Link>
-              <Link to="/profile" className="btn user-btn">
+              <Link to="/profile" className="btn btn-outline">
                 Profile
               </Link>
             </>

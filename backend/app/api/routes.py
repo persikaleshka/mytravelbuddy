@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from .. import auth, database, models
 from ..integrations import get_city_weather_forecast
+from ..services import extract_map_points_from_text
 from .schemas import (
     ApiRouteCreate,
     ApiRoutePageResponse,
@@ -228,12 +229,31 @@ async def get_route_map_data(
         avg_lon = sum(point.longitude for point in route_points) / len(route_points)
         center = {"latitude": avg_lat, "longitude": avg_lon}
 
+    latest_assistant_message = (
+        db.query(models.ChatMessage)
+        .filter(
+            models.ChatMessage.route_id == route.id,
+            models.ChatMessage.user_id == current_user.id,
+            models.ChatMessage.sender == "assistant",
+        )
+        .order_by(models.ChatMessage.created_at.desc(), models.ChatMessage.id.desc())
+        .first()
+    )
+    chat_suggestions = []
+    if latest_assistant_message is not None:
+        chat_suggestions = extract_map_points_from_text(
+            db=db,
+            city=route.city,
+            assistant_text=latest_assistant_message.text,
+        )
+
     return {
         "status": "ok",
         "routeId": str(route.id),
         "city": route.city,
         "center": center,
         "points": [point.model_dump() for point in route_points],
+        "chat_suggestions": chat_suggestions,
     }
 
 

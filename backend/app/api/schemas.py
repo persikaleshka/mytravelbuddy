@@ -152,6 +152,7 @@ class ApiChatMessageResponse(BaseModel):
     userId: str
     sender: ChatSender
     text: str
+    formattedText: str
     createdAt: str
 
     @classmethod
@@ -163,6 +164,7 @@ class ApiChatMessageResponse(BaseModel):
         sender: str,
         text: str,
         created_at: datetime,
+        formatted_text: str,
     ) -> "ApiChatMessageResponse":
         return cls(
             id=str(message_id),
@@ -170,13 +172,26 @@ class ApiChatMessageResponse(BaseModel):
             userId=str(user_id),
             sender=sender,  # type: ignore[arg-type]
             text=text,
+            formattedText=formatted_text,
             createdAt=created_at.isoformat(),
         )
+
+
+class ApiChatMapPoint(BaseModel):
+    location_id: str
+    name: str
+    category: str
+    latitude: float
+    longitude: float
+    day: Optional[int] = None
+    reason: Optional[str] = None
 
 
 class ApiChatSendResponse(BaseModel):
     user_message: ApiChatMessageResponse
     assistant_message: ApiChatMessageResponse
+    map_points: list[ApiChatMapPoint] = Field(default_factory=list)
+    assistant_structured: dict = Field(default_factory=dict)
 
 
 class ApiRoutePointResponse(BaseModel):

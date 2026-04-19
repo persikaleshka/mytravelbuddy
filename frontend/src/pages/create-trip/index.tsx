@@ -110,17 +110,16 @@ const CreateTripPage: React.FC = () => {
           </div>
           
 <div className="form-group">
-              <label htmlFor="preferences">Preferences</label>
-              <textarea
-                id="preferences"
-                value={preferences}
-                onChange={(e) => setPreferences(e.target.value)}
-                placeholder="Enter location IDs separated by commas (e.g., 1, 2, 3)"
-                rows={4}
-                className={isError ? 'error' : ''}
-              />
-              <p className="form-help">Enter location IDs separated by commas</p>
-            </div>
+            <label htmlFor="preferences">Preferences</label>
+            <textarea
+              id="preferences"
+              value={preferences}
+              onChange={(e) => setPreferences(e.target.value)}
+              placeholder="Enter location IDs separated by commas (e.g., 1, 2, 3)"
+              rows={4}
+            />
+            <p className="form-help">Enter location IDs separated by commas</p>
+          </div>
           
           {isError && (
             <div className="error-message">
@@ -131,7 +130,7 @@ const CreateTripPage: React.FC = () => {
           <div className="form-actions">
             <button 
               type="button" 
-              className="btn btn-outline"
+              className="btn btn-primary"
               onClick={handleCancel}
               disabled={isPending}
             >
