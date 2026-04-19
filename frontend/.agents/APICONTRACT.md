@@ -260,12 +260,103 @@ These are server-rendered pages kept for compatibility:
 They are not part of frontend SPA API contract.
 ---
 
-## 5) Out of Scope for v1 (TBD)
+## 5) Chat API
 
-Not implemented yet, should be added in next contract version:
-- Profile API
-- Chat/messages API
-- Tickets API integration
+All chat endpoints require Authorization: Bearer <token>.
+
+### GET /api/routes/{route_id}/messages
+Get chat messages for a route.
+
+Success 200:
+[
+  {
+    "id": "1",
+    "routeId": "10",
+    "userId": "1",
+    "sender": "user",
+    "text": "Hello!",
+    "formattedText": "Hello!",
+    "createdAt": "2026-04-04T17:00:00.000000"
+  },
+  {
+    "id": "2",
+    "routeId": "10",
+    "userId": "1",
+    "sender": "assistant",
+    "text": "Hi there! How can I help?",
+    "formattedText": "Hi there! How can I help?",
+    "createdAt": "2026-04-04T17:00:05.000000"
+  }
+]
+
+Errors:
+- 401 invalid or missing token
+- 404 route not found
+
+### POST /api/routes/{route_id}/messages
+Send a message to the chat and get AI response.
+
+Request:
+{
+  "text": "What should I do in Moscow?"
+}
+
+Success 200:
+{
+  "user_message": {
+    "id": "3",
+    "routeId": "10",
+    "userId": "1",
+    "sender": "user",
+    "text": "What should I do in Moscow?",
+    "formattedText": "What should I do in Moscow?",
+    "createdAt": "2026-04-04T17:05:00.000000"
+  },
+  "assistant_message": {
+    "id": "4",
+    "routeId": "10",
+    "userId": "1",
+    "sender": "assistant",
+    "text": "Here are some suggestions...",
+    "formattedText": "Here are some suggestions...",
+    "createdAt": "2026-04-04T17:05:02.000000"
+  },
+  "map_points": [
+    {
+      "location_id": "1",
+      "name": "Tretyakov Gallery",
+      "category": "museum",
+      "latitude": 55.7414,
+      "longitude": 37.6208,
+      "day": 1,
+      "reason": "Popular art museum"
+    }
+  ],
+  "assistant_structured": {
+    "summary": "Moscow has many cultural attractions",
+    "plan": [
+      "Visit Tretyakov Gallery on day 1",
+      "Walk in Gorky Park on day 2"
+    ],
+    "questions": [
+      "Would you like museum recommendations?",
+      "Do you prefer indoor or outdoor activities?"
+    ],
+    "places": [
+      {
+        "name": "Tretyakov Gallery",
+        "day": 1,
+        "reason": "Popular art museum"
+      }
+    ]
+  }
+}
+
+Errors:
+- 401 invalid or missing token
+- 404 route not found
+- 422 validation error
+- 429 rate limit exceeded
 
 ## 6) Additional Route Endpoints
 
@@ -341,7 +432,7 @@ Success 200:
 }
 
 ### GET /api/routes/{route_id}/map
-Get map data for a route.
+Get map data for a route, including chat suggestions.
 
 Success 200:
 {
@@ -361,6 +452,17 @@ Success 200:
       "longitude": 37.6208,
       "day_number": 1,
       "order_in_day": 1
+    }
+  ],
+  "chat_suggestions": [
+    {
+      "location_id": "2",
+      "name": "Red Square",
+      "category": "landmark",
+      "latitude": 55.7539,
+      "longitude": 37.6208,
+      "day": 1,
+      "reason": "Historic landmark"
     }
   ]
 }

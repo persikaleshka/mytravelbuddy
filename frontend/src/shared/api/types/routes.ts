@@ -17,7 +17,7 @@ export interface RoutePageResponse {
   preferences: string[];
   route_points: RoutePoint[];
   weather: WeatherResponse;
-  tickets: any[];
+  tickets: unknown[];
 }
 
 export interface RouteItem {

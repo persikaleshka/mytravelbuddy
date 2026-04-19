@@ -1,0 +1,79 @@
+.assistant-structured {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.structured-section {
+  margin-bottom: 16px;
+}
+
+.structured-section:last-child {
+  margin-bottom: 0;
+}
+
+.structured-section h4 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.summary-section p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.plan-section ul,
+.questions-section ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.plan-section li,
+.questions-section li {
+  margin-bottom: 4px;
+}
+
+.places-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.place-card {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: white;
+}
+
+.place-card h5 {
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.place-card p {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.place-card p strong {
+  color: #555;
+}
+
+.show-on-map-button {
+  margin-top: 8px;
+  padding: 6px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.show-on-map-button:hover {
+  background-color: #0056b3;
+}

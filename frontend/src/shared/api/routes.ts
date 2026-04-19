@@ -1,5 +1,6 @@
 import { apiClient } from '.';
 import type { TravelRoute, CreateRouteRequest, UpdateRouteRequest, RoutePageResponse } from './types/routes';
+import type { MapResponse } from './types/map';
 
 export const createRoute = async (
   data: CreateRouteRequest,
@@ -20,6 +21,11 @@ export const getRoute = async (id: string): Promise<TravelRoute> => {
 
 export const getRoutePage = async (id: string): Promise<RoutePageResponse> => {
   const response = await apiClient.get<RoutePageResponse>(`/routes/${id}/page`);
+  return response.data;
+};
+
+export const getRouteMapData = async (id: string): Promise<MapResponse> => {
+  const response = await apiClient.get<MapResponse>(`/routes/${id}/map`);
   return response.data;
 };
 

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { YMaps, Map, Placemark } from '@pbe/react-yandex-maps';
 import type { MapPoint } from '@/shared/api/types/map';
 import './MapDisplay.css';
 
@@ -9,40 +10,38 @@ interface MapDisplayProps {
 }
 
 const MapDisplay: React.FC<MapDisplayProps> = ({ points, center, city }) => {
-  // Для простого отображения создадим визуализацию карты с точками
-  // В реальной реализации здесь будет компонент карты (например, Leaflet, Google Maps и т.д.)
+  const [mapCenter, setMapCenter] = useState<[number, number]>([55.751244, 37.618423]);
+  const mapRef = useRef<any>(null);
 
-  const renderMapVisualization = () => {
-    // Создаем визуализацию карты с точками
-    return (
-      <div className="map-visualization">
-        <div className="map-background">
-          {/* Отображаем точки на карте */}
-          {points.map((point, index) => (
-            <div
-              key={point.location_id}
-              className="map-marker"
-              style={{
-                position: 'absolute',
-                left: `${20 + (index * 15) % 60}%`,
-                top: `${30 + (index * 10) % 40}%`,
-              }}
-              title={`${point.name} (${point.category})`}
-            >
-              <div className="marker-icon">📍</div>
-              <div className="marker-label">{point.name}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
+  useEffect(() => {
+    if (center) {
+      setMapCenter([center.latitude, center.longitude]);
+    } else if (points.length > 0) {
+      setMapCenter([points[0].latitude, points[0].longitude]);
+    }
+  }, [center, points]);
+
+  useEffect(() => {
+    const handleShowPointOnMap = (event: CustomEvent) => {
+      const { latitude, longitude } = event.detail;
+      if (mapRef.current) {
+        mapRef.current.setCenter([latitude, longitude], 13);
+      }
+    };
+
+    window.addEventListener('showPointOnMap', handleShowPointOnMap as EventListener);
+    return () => {
+      window.removeEventListener('showPointOnMap', handleShowPointOnMap as EventListener);
+    };
+  }, []);
 
   if (!points || points.length === 0) {
     return (
       <div className="map-display">
         <h3>Route Map</h3>
-        <p>No route points available</p>
+        <div className="map-placeholder">
+          <p>ИИ не предложил точки, попробуйте уточнить запрос</p>
+        </div>
       </div>
     );
   }
@@ -56,24 +55,37 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ points, center, city }) => {
           <p><strong>Center:</strong> {center.latitude.toFixed(4)}, {center.longitude.toFixed(4)}</p>
         )}
       </div>
-      {renderMapVisualization()}
-      <div className="points-list">
-        <h4>Route Points:</h4>
-        {points.map((point, index) => (
-          <div key={point.location_id} className="point-item">
-            <span className="point-number">{index + 1}.</span>
-            <div className="point-details">
-              <strong>{point.name}</strong>
-              <div className="point-meta">
-                <span className="point-category">{point.category}</span>
-                <span className="point-coords">
-                  {point.latitude.toFixed(4)}, {point.longitude.toFixed(4)}
-                </span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      
+      <YMaps query={{ apikey: import.meta.env.VITE_YANDEX_MAPS_API_KEY }}>
+        <Map
+          instanceRef={mapRef}
+          state={{ center: mapCenter, zoom: 10 }}
+          width="100%"
+          height="400px"
+          modules={['geoObject.addon.balloon', 'geoObject.addon.hint']}
+        >
+          {points.map((point, index) => (
+            <Placemark
+              key={point.location_id || index}
+              geometry={[point.latitude, point.longitude]}
+              properties={{
+                iconContent: point.name,
+                hintContent: `${point.name} (${point.category})`,
+                balloonContent: `
+                  <strong>${point.name}</strong><br/>
+                  Категория: ${point.category}<br/>
+                  ${point.reason ? `Причина: ${point.reason}<br/>` : ''}
+                  ${point.day ? `День: ${point.day}<br/>` : ''}
+                `
+              }}
+              options={{
+                preset: 'islands#blueIcon',
+                iconColor: '#007bff'
+              }}
+            />
+          ))}
+        </Map>
+      </YMaps>
     </div>
   );
 };
