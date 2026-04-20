@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from .api import auth as api_auth
 from .api import chat as api_chat
@@ -46,6 +47,13 @@ app.include_router(api_routes.router, prefix="/api", tags=["api-routes"])
 async def startup():
     try:
         Base.metadata.create_all(bind=engine)
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "ALTER TABLE chat_messages "
+                    "ADD COLUMN IF NOT EXISTS ai_payload TEXT"
+                )
+            )
     except SQLAlchemyError:
         logger.exception("Database initialization failed")
 

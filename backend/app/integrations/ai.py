@@ -3,8 +3,60 @@ import logging
 import os
 import re
 from typing import Any, Protocol
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 logger = logging.getLogger(__name__)
+
+
+class AIPlace(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    city: str = Field(min_length=1, max_length=120)
+    day: int | None = Field(default=None, ge=1, le=31)
+    category: str | None = Field(default=None, max_length=40)
+    reason: str | None = Field(default=None, max_length=300)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
+
+    @field_validator("name", "city", mode="before")
+    @classmethod
+    def clean_required_text(cls, value: Any) -> str:
+        if not isinstance(value, str):
+            raise ValueError("must be string")
+        clean = value.strip()
+        if not clean:
+            raise ValueError("must not be empty")
+        return clean
+
+    @field_validator("category", "reason", mode="before")
+    @classmethod
+    def clean_optional_text(cls, value: Any) -> str | None:
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            return None
+        clean = value.strip()
+        return clean if clean else None
+
+
+class AIStructuredResponse(BaseModel):
+    summary: list[str] = Field(default_factory=list, max_length=4)
+    plan: list[str] = Field(default_factory=list, max_length=10)
+    questions: list[str] = Field(default_factory=list, max_length=4)
+    places: list[AIPlace] = Field(default_factory=list, max_length=10)
+
+    @field_validator("summary", "plan", "questions", mode="before")
+    @classmethod
+    def clean_text_list(cls, value: Any) -> list[str]:
+        if not isinstance(value, list):
+            return []
+        out: list[str] = []
+        for item in value:
+            if not isinstance(item, str):
+                continue
+            text = item.strip()
+            if text and text not in out:
+                out.append(text)
+        return out
 
 
 class LLMProvider(Protocol):
@@ -257,42 +309,37 @@ def _clean_list(values: Any, *, limit: int) -> list[str]:
 
 
 def _normalize_structured(data: dict[str, Any], city: str) -> dict[str, Any]:
-    summary = _clean_list(data.get("summary"), limit=4)
-    plan = _clean_list(data.get("plan"), limit=10)
-    questions = _clean_list(data.get("questions"), limit=4)
+    base = {
+        "summary": data.get("summary"),
+        "plan": data.get("plan"),
+        "questions": data.get("questions"),
+        "places": data.get("places"),
+    }
 
-    places: list[dict[str, Any]] = []
-    raw_places = data.get("places")
+    raw_places = base.get("places")
     if isinstance(raw_places, list):
+        normalized_places: list[dict[str, Any]] = []
         for raw in raw_places:
             if not isinstance(raw, dict):
                 continue
-            name = raw.get("name")
-            if not isinstance(name, str) or not name.strip():
-                continue
-            place: dict[str, Any] = {"name": name.strip(), "city": city}
-            raw_city = raw.get("city")
-            if isinstance(raw_city, str) and raw_city.strip():
-                place["city"] = raw_city.strip()
-            reason = raw.get("reason")
-            if isinstance(reason, str) and reason.strip():
-                place["reason"] = reason.strip()
-            category = raw.get("category")
-            if isinstance(category, str) and category.strip():
-                place["category"] = category.strip().lower()
-            day = raw.get("day")
-            if isinstance(day, int) and day > 0:
-                place["day"] = day
-            places.append(place)
-            if len(places) >= 10:
+            place = dict(raw)
+            if not isinstance(place.get("city"), str) or not place.get("city", "").strip():
+                place["city"] = city
+            normalized_places.append(place)
+            if len(normalized_places) >= 10:
                 break
+        base["places"] = normalized_places
 
-    return {
-        "summary": summary,
-        "plan": plan,
-        "questions": questions,
-        "places": places,
-    }
+    try:
+        parsed = AIStructuredResponse.model_validate(base)
+    except ValidationError:
+        return {
+            "summary": [],
+            "plan": [],
+            "questions": [],
+            "places": [],
+        }
+    return parsed.model_dump()
 
 
 def _fallback_structured(route_name: str, city: str, user_text: str) -> dict[str, Any]:
@@ -310,26 +357,41 @@ def _render_structured_text(structured: dict[str, Any]) -> str:
     questions = _clean_list(structured.get("questions"), limit=4)
 
     lines: list[str] = []
-    lines.append("Короткий вывод:")
     if summary:
         lines.extend(f"- {item}" for item in summary)
     else:
-        lines.append("- Готов предложить маршрут и список мест.")
+        lines.append("- Собрал основу маршрута и подбор мест.")
 
-    lines.append("")
-    lines.append("План/советы:")
     if plan:
+        lines.append("")
         for idx, item in enumerate(plan, start=1):
             lines.append(f"{idx}. {item}")
     else:
-        lines.append("1. Уточни пожелания, и я соберу план по дням.")
+        lines.append("")
+        lines.append("1. Уточни пожелания, и я соберу маршрут по дням.")
 
-    lines.append("")
-    lines.append("Уточнить:")
     if questions:
+        lines.append("")
         lines.extend(f"- {item}" for item in questions)
-    else:
-        lines.append("- Дополнительных уточнений нет.")
+
+    places = structured.get("places")
+    if isinstance(places, list) and places:
+        lines.append("")
+        for item in places[:8]:
+            if not isinstance(item, dict):
+                continue
+            name = item.get("name")
+            if not isinstance(name, str) or not name.strip():
+                continue
+            city = item.get("city")
+            day = item.get("day")
+            suffix_parts: list[str] = []
+            if isinstance(city, str) and city.strip():
+                suffix_parts.append(city.strip())
+            if isinstance(day, int) and day > 0:
+                suffix_parts.append(f"день {day}")
+            suffix = f" ({', '.join(suffix_parts)})" if suffix_parts else ""
+            lines.append(f"- {name.strip()}{suffix}")
 
     return "\n".join(lines).strip()
 
@@ -392,14 +454,23 @@ def _build_system_prompt(
         '"plan": ["..."], '
         '"questions": ["..."], '
         '"places": ['
-        '{"name":"...", "city":"...", "day":1, "category":"museum|cafe|park", "reason":"..."}'
+        "{"
+        '"name":"...", '
+        '"city":"...", '
+        '"day":1, '
+        '"category":"museum|cafe|park|other", '
+        '"reason":"...", '
+        '"latitude": 59.93, '
+        '"longitude": 30.31'
+        "}"
         "]"
         "}\n"
         "Ограничения:\n"
         "- summary: 1-3 коротких пункта\n"
-        "- plan: 3-7 пунктов\n"
+        "- plan: 3-7 пунктов, понятные и приятные для чтения\n"
         "- questions: 0-2 пункта\n"
-        "- places: 3-8 мест, если есть достаточно контекста"
+        "- places: 3-8 мест, если есть достаточно контекста\n"
+        "- Если координаты не знаешь точно, верни latitude/longitude = null"
     )
 
 

@@ -4,10 +4,12 @@ import {
   getUserRoutes,
   getRoute,
   getRoutePage,
+  getRouteMapData,
   updateRoute,
   deleteRoute,
 } from '../routes';
 import type { CreateRouteRequest, UpdateRouteRequest, TravelRoute, RoutePageResponse } from '../types/routes';
+import type { MapResponse } from '../types/map';
 
 
 const ROUTES_QUERY_KEY = 'routes';
@@ -32,6 +34,13 @@ export const useRoutePage = (id: string) => {
   return useQuery<RoutePageResponse, Error>({
     queryKey: [ROUTES_QUERY_KEY, 'page', id],
     queryFn: () => getRoutePage(id),
+  });
+};
+
+export const useRouteMapData = (id: string) => {
+  return useQuery<MapResponse, Error>({
+    queryKey: [ROUTES_QUERY_KEY, 'map', id],
+    queryFn: () => getRouteMapData(id),
   });
 };
 

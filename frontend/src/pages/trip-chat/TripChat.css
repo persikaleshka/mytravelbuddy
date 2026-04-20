@@ -1,14 +1,14 @@
 .trip-chat-page {
   padding: 0;
   height: 100vh;
-  background-color: #dde6d5; /* Color 3 for body background */
+  background-color: #dde6d5;
   display: flex;
   flex-direction: column;
 }
 
 .trip-header {
   padding: 20px;
-  background-color: #dde6d5; /* Same as background */
+  background-color: #dde6d5;
   width: 100%;
   box-sizing: border-box;
   display: flex;
@@ -17,21 +17,22 @@
   position: relative;
 }
 
-.trip-header .back-button {
-  background-color: #fceee9; /* Color 2 for buttons */
-  color: #667b68; /* Color 5 for text */
+.trip-header .back-button,
+.trip-header .delete-button {
+  background-color: #fceee9;
+  color: #667b68;
   border: none;
   border-radius: 4px;
   padding: 0.75rem 1.5rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  z-index: 1; /* Ensure button is above other elements */
 }
 
-.trip-header .back-button:hover {
-  background-color: #f8d3c5; /* Color 1 for hover state */
-  color: #667b68; /* Color 5 for text */
+.trip-header .back-button:hover,
+.trip-header .delete-button:hover {
+  background-color: #f8d3c5;
+  color: #667b68;
 }
 
 .trip-info-header {
@@ -39,18 +40,18 @@
   left: 0;
   right: 0;
   text-align: center;
-  pointer-events: none; /* Allow clicking through to button */
+  pointer-events: none;
 }
 
 .trip-info-header h1 {
   margin: 0 0 5px 0;
   font-size: 24px;
-  color: #667b68; /* Color 5 for text */
+  color: #667b68;
 }
 
 .trip-info-header p {
   margin: 0;
-  color: #667b68; /* Color 5 for text */
+  color: #667b68;
   font-size: 14px;
 }
 
@@ -62,7 +63,7 @@
 
 .trip-sidebar {
   width: 50%;
-  background: #dde6d5; /* Same as body background */
+  background: #dde6d5;
   display: flex;
   flex-direction: column;
   padding: 20px;
@@ -72,18 +73,18 @@
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 200px); /* Fixed height for chat container */
+  height: calc(100vh - 200px);
   background-color: white;
   margin: 0 0 20px 0;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  overflow: hidden; /* Hide overflow */
+  overflow: hidden;
 }
 
 .messages-container {
   flex: 1;
   padding: 20px;
-  overflow-y: auto; /* Scroll only within messages container */
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -128,8 +129,8 @@
 }
 
 .message.user .message-content {
-  background: #fceee9; /* Color 2 for user messages */
-  color: #667b68; /* Color 5 for text */
+  background: #fceee9;
+  color: #667b68;
   border-bottom-right-radius: 4px;
 }
 
@@ -176,8 +177,8 @@
 .send-button {
   padding: 12px 20px;
   border-radius: 24px;
-  background-color: #fceee9; /* Color 2 for buttons */
-  color: #667b68; /* Color 5 for text */
+  background-color: #fceee9;
+  color: #667b68;
   border: none;
   font-weight: 600;
   cursor: pointer;
@@ -185,8 +186,8 @@
 }
 
 .send-button:hover {
-  background-color: #f8d3c5; /* Color 1 for hover state */
-  color: #667b68; /* Color 5 for text */
+  background-color: #f8d3c5;
+  color: #667b68;
 }
 
 .send-button:disabled {
@@ -196,10 +197,10 @@
 
 .trip-content {
   width: 50%;
-  background: #dde6d5; /* Same as body background */
+  background: #dde6d5;
   padding: 20px;
   box-sizing: border-box;
-  height: calc(100vh - 120px); /* Fixed height */
+  height: calc(100vh - 120px);
 }
 
 .trip-content-inner {
@@ -270,6 +271,10 @@
   margin-right: 15px;
 }
 
+.point-details {
+  flex: 1;
+}
+
 .point-details h4 {
   margin: 0 0 5px 0;
   color: #667b68;
@@ -279,6 +284,24 @@
   margin: 0;
   color: #6c757d;
   font-size: 14px;
+}
+
+.show-on-map-button {
+  margin: 0 0 0 15px;
+  padding: 6px 12px;
+  background-color: #fceee9;
+  color: #667b68;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  align-self: center;
+}
+
+.show-on-map-button:hover {
+  background-color: #f8d3c5;
+  color: #667b68;
 }
 
 .weather-placeholder {
@@ -311,7 +334,7 @@
 .loading, .error {
   padding: 40px 20px;
   text-align: center;
-  color: #667b68; /* Color 5 for text */
+  color: #667b68;
 }
 
 .error {
@@ -354,4 +377,41 @@
   .trip-info {
     margin: 0 10px 10px 10px;
   }
+}
+
+.error-message {
+  padding: 10px 20px;
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  margin: 10px 20px;
+}
+
+.error-message p {
+  margin: 0 0 10px 0;
+}
+
+.retry-button {
+  padding: 6px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.retry-button:hover {
+  background-color: #0056b3;
+}
+
+.structured-placeholder {
+  padding: 10px 20px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  margin: 10px 20px;
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
 }
