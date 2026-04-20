@@ -154,128 +154,6 @@ class OpenRouterProvider:
         return None
 
 
-class OllamaProvider:
-    def __init__(self, base_url: str, model: str, timeout_seconds: float):
-        self.base_url = base_url.rstrip("/")
-        self.model = model
-        self.timeout_seconds = timeout_seconds
-
-    def _base_url_candidates(self) -> list[str]:
-        base = self.base_url.rstrip("/")
-        candidates = [base]
-
-        if "127.0.0.1" in base or "localhost" in base:
-            candidates.append(base.replace("127.0.0.1", "host.docker.internal"))
-            candidates.append(base.replace("localhost", "host.docker.internal"))
-        elif "host.docker.internal" in base:
-            candidates.append(base.replace("host.docker.internal", "127.0.0.1"))
-            candidates.append(base.replace("host.docker.internal", "localhost"))
-
-        env_fallback = os.getenv("OLLAMA_FALLBACK_BASE_URL", "").strip()
-        if env_fallback:
-            candidates.append(env_fallback.rstrip("/"))
-
-        unique: list[str] = []
-        for value in candidates:
-            if value and value not in unique:
-                unique.append(value)
-        return unique
-
-    def _build_prompt(
-        self,
-        *,
-        system_prompt: str,
-        history: list[dict[str, str]],
-        user_message: str,
-    ) -> str:
-        history_block = []
-        for item in history:
-            sender = item.get("sender", "user")
-            text = item.get("text", "")
-            if not text:
-                continue
-            role = "Пользователь" if sender == "user" else "Ассистент"
-            history_block.append(f"{role}: {text}")
-
-        history_text = "\n".join(history_block) if history_block else "История пуста."
-        return (
-            f"{system_prompt}\n\n"
-            "История диалога (последние сообщения):\n"
-            f"{history_text}\n\n"
-            f"Текущее сообщение пользователя: {user_message}\n"
-            "Ответ:"
-        )
-
-    def generate(
-        self,
-        *,
-        system_prompt: str,
-        history: list[dict[str, str]],
-        user_message: str,
-    ) -> str | None:
-        try:
-            import httpx
-        except Exception:
-            return None
-
-        prompt = self._build_prompt(
-            system_prompt=system_prompt,
-            history=history,
-            user_message=user_message,
-        )
-        timeout = httpx.Timeout(timeout=self.timeout_seconds, connect=min(self.timeout_seconds, 10.0))
-
-        for base_url in self._base_url_candidates():
-            try:
-                with httpx.Client(timeout=timeout) as client:
-                    response = client.post(
-                        f"{base_url}/api/generate",
-                        json={
-                            "model": self.model,
-                            "prompt": prompt,
-                            "stream": False,
-                            "options": {"temperature": 0.35},
-                        },
-                    )
-            except Exception as exc:
-                logger.warning(
-                    "Ollama request failed (%s, model=%s): %s",
-                    base_url,
-                    self.model,
-                    str(exc),
-                )
-                continue
-
-            if response.status_code >= 400:
-                logger.warning(
-                    "Ollama returned %s (%s, model=%s): %s",
-                    response.status_code,
-                    base_url,
-                    self.model,
-                    response.text[:300],
-                )
-                continue
-
-            try:
-                payload = response.json()
-            except Exception as exc:
-                logger.warning("Ollama invalid JSON (%s, model=%s): %s", base_url, self.model, str(exc))
-                continue
-
-            output_text = payload.get("response") if isinstance(payload, dict) else None
-            if isinstance(output_text, str) and output_text.strip():
-                return output_text.strip()
-
-            logger.warning(
-                "Ollama empty response (%s, model=%s): %s",
-                base_url,
-                self.model,
-                str(payload)[:300],
-            )
-
-        return None
-
-
 class FallbackProvider:
     def __init__(self, route_name: str, city: str):
         self.route_name = route_name
@@ -475,24 +353,18 @@ def _build_system_prompt(
 
 
 def _get_provider(route_name: str, city: str) -> LLMProvider:
-    provider_name = os.getenv("AI_PROVIDER", "ollama").lower().strip()
     timeout_seconds = float(os.getenv("EXTERNAL_TIMEOUT_SECONDS", "20"))
 
-    if provider_name == "openrouter":
-        return OpenRouterProvider(
-            api_key=os.getenv("OPENROUTER_API_KEY", ""),
-            model=os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.2-3b-instruct:free"),
-            timeout_seconds=timeout_seconds,
-            base_url=os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1/chat/completions"),
-        )
+    if os.getenv("AI_PROVIDER", "openrouter").lower().strip() != "openrouter":
+        logger.warning("Only OpenRouter provider is supported in current configuration")
+        return FallbackProvider(route_name, city)
 
-    if provider_name == "ollama":
-        return OllamaProvider(
-            base_url=os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
-            model=os.getenv("OLLAMA_MODEL", "llama3.1"),
-            timeout_seconds=timeout_seconds,
-        )
-    return FallbackProvider(route_name, city)
+    return OpenRouterProvider(
+        api_key=os.getenv("OPENROUTER_API_KEY", ""),
+        model=os.getenv("OPENROUTER_MODEL", "openai/gpt-oss-120b:free"),
+        timeout_seconds=timeout_seconds,
+        base_url=os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1/chat/completions"),
+    )
 
 
 def generate_trip_assistant_output(
@@ -530,7 +402,7 @@ def generate_trip_assistant_output(
             "Using fallback assistant reply for route='%s', city='%s', provider='%s'",
             route_name,
             city,
-            os.getenv("AI_PROVIDER", "ollama"),
+            os.getenv("AI_PROVIDER", "openrouter"),
         )
         structured = _fallback_structured(route_name, city, user_text)
 
