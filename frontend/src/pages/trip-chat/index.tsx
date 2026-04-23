@@ -4,11 +4,30 @@ import { useRoute, useDeleteRoute } from '@/shared/api/hooks/routes';
 import { useRouteMessages, useSendRouteMessage } from '@/shared/api/hooks/chat';
 import { useRoutePage, useRouteMapData } from '@/shared/api/hooks/routes';
 import { useQueryClient } from '@tanstack/react-query';
-import type { AssistantStructured as AssistantStructuredType } from '@/entities/chat/types';
 import WeatherDisplay from '@/widgets/weather-display';
 import MapDisplay from '@/widgets/map-display';
-import AssistantStructured from '@/widgets/assistant-structured/AssistantStructured';
+import type { ChatMapPoint } from '@/entities/chat/types';
+import type { MapPoint } from '@/shared/api/types/map';
 import './TripChat.css';
+
+// Объединяет маршрутные точки и AI-точки без дублирования по location_id
+function computeMapPoints(
+  mapData: { points: MapPoint[]; chat_suggestions: MapPoint[] } | undefined,
+  latestChatPoints: ChatMapPoint[]
+): MapPoint[] {
+  const routePoints: MapPoint[] = mapData?.points ?? [];
+  // Используем точки из последнего AI-ответа если они есть,
+  // иначе берём chat_suggestions из кэша mapData
+  const aiPoints: MapPoint[] = latestChatPoints.length > 0
+    ? latestChatPoints
+    : (mapData?.chat_suggestions ?? []);
+
+  // Дедупликация: не добавляем AI-точку если такой location_id уже есть в маршруте
+  const routeIds = new Set(routePoints.map(p => p.location_id));
+  const uniqueAiPoints = aiPoints.filter(p => !routeIds.has(p.location_id));
+
+  return [...routePoints, ...uniqueAiPoints];
+}
 
 const TripChatPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,12 +36,14 @@ const TripChatPage: React.FC = () => {
   const { data: route, isLoading: isRouteLoading, isError: isRouteError, error: routeError } = useRoute(id || '');
   const { mutate: deleteRoute } = useDeleteRoute();
   const { data: routePage, isLoading: isRoutePageLoading } = useRoutePage(id || '');
-  const { data: mapData, isLoading: isMapLoading } = useRouteMapData(id || '');
+  const { data: mapData } = useRouteMapData(id || '');
   const { data: messages = [], isLoading: isMessagesLoading } = useRouteMessages(id || '');
   const { mutate: sendMessage, isPending: isSending, isError: isSendError, error: sendError } = useSendRouteMessage(id || '');
   const [newMessage, setNewMessage] = useState('');
-  const [assistantStructured, setAssistantStructured] = useState<AssistantStructuredType | null>(null);
+  // Точки от последнего AI-ответа — показываются поверх маршрутных точек
+  const [latestChatPoints, setLatestChatPoints] = useState<ChatMapPoint[]>([]);
   const hasScrolledToBottom = useRef(false);
+  const lastMessageTextRef = useRef('');
 
   const scrollToBottom = () => {
     const messagesContainer = document.querySelector('.messages-container');
@@ -55,37 +76,41 @@ const TripChatPage: React.FC = () => {
   useEffect(() => {
     if (id) {
       queryClient.invalidateQueries({ queryKey: ['routes', 'map', id] });
+      // При открытии страницы подтягиваем GET /api/routes/{id}/map и chat_suggestions
+      queryClient.invalidateQueries({ queryKey: ['routes', 'map', id] });
     }
   }, [id, queryClient]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !id) return;
+    doSend(newMessage.trim());
+  };
 
+  const doSend = (text: string) => {
+    if (!text || !id) return;
+    lastMessageTextRef.current = text;
     sendMessage(
-      { text: newMessage.trim() },
+      { text },
       {
         onSuccess: (data) => {
           setNewMessage('');
-          setAssistantStructured(data.assistant_structured);
-          
+          // Сохраняем точки последнего AI-ответа для немедленного отображения на карте
+          if (data.map_points && data.map_points.length > 0) {
+            setLatestChatPoints(data.map_points);
+          }
+          // Обновляем кэш карты чтобы chat_suggestions были актуальны после рефетча
+          queryClient.setQueryData(['routes', 'map', id], (oldData: unknown) => {
+            if (oldData && typeof oldData === 'object' && data.map_points) {
+              const old = oldData as Record<string, unknown>;
+              return { ...old, chat_suggestions: data.map_points };
+            }
+            return oldData;
+          });
+
           setTimeout(() => {
             scrollToBottom();
           }, 100);
-          
-          if (data.map_points && data.map_points.length > 0) {
-            queryClient.setQueryData(['map', id], (oldData: unknown) => {
-              if (oldData && typeof oldData === 'object' && data.map_points) {
-                const oldDataObj = oldData as Record<string, unknown>;
-                return {
-                  ...oldDataObj,
-                  points: [...(Array.isArray(oldDataObj.points) ? oldDataObj.points : []), ...data.map_points],
-                  chat_suggestions: data.map_points
-                };
-              }
-              return oldData;
-            });
-          }
         },
         onError: (error) => {
           console.error('Failed to send message:', error);
@@ -183,8 +208,8 @@ const TripChatPage: React.FC = () => {
               {messages.map((message) => (
                 <div key={message.id} className={`message ${message.sender}`}>
                   <div className="message-content">
-                    <div className="message-text">
-                      {message.formattedText || message.text}
+                    <div className={`message-text${message.sender === 'assistant' ? ' message-text--formatted' : ''}`}>
+                      {message.sender === 'assistant' ? (message.formattedText || message.text) : message.text}
                     </div>
                     <div className="message-time">
                       {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -192,32 +217,43 @@ const TripChatPage: React.FC = () => {
                   </div>
                 </div>
               ))}
-              
-              {assistantStructured && Object.keys(assistantStructured).length > 0 && (
-                <AssistantStructured 
-                  structured={assistantStructured} 
-                  onShowOnMap={(point) => {
-                    console.log('Show on map:', point);
-                  }} 
-                />
-              )}
             </div>
             
-            <div className="bottom-chat-window">
-              <p>Дополнительная информация или элементы управления чатом</p>
-            </div>
-
             {isSendError && (
               <div className="error-message">
                 {sendError?.message.includes('429') ? (
                   <>
-                    <p>Too many requests. Please wait a moment and try again.</p>
-                    <button onClick={() => sendMessage({ text: newMessage.trim() })} className="retry-button">
-                      Retry
+                    <p>Слишком много запросов. Подождите немного и попробуйте снова.</p>
+                    <button
+                      onClick={() => doSend(lastMessageTextRef.current)}
+                      className="retry-button"
+                      disabled={isSending}
+                    >
+                      Повторить
+                    </button>
+                  </>
+                ) : sendError?.message.toLowerCase().includes('timeout') || sendError?.message.toLowerCase().includes('network') ? (
+                  <>
+                    <p>Не удалось отправить сообщение. Проверьте соединение и попробуйте снова.</p>
+                    <button
+                      onClick={() => doSend(lastMessageTextRef.current)}
+                      className="retry-button"
+                      disabled={isSending}
+                    >
+                      Повторить
                     </button>
                   </>
                 ) : (
-                  <p>Error sending message: {sendError?.message || 'Unknown error'}</p>
+                  <>
+                    <p>Ошибка отправки сообщения. Попробуйте ещё раз.</p>
+                    <button
+                      onClick={() => doSend(lastMessageTextRef.current)}
+                      className="retry-button"
+                      disabled={isSending}
+                    >
+                      Повторить
+                    </button>
+                  </>
                 )}
               </div>
             )}
@@ -227,16 +263,16 @@ const TripChatPage: React.FC = () => {
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type your message..."
+                placeholder="Спросите ассистента о маршруте..."
                 className="message-input"
                 disabled={isSending}
               />
-              <button 
-                type="submit" 
-                className="send-button"
+              <button
+                type="submit"
+                className={`send-button${isSending ? ' send-button--loading' : ''}`}
                 disabled={isSending || !newMessage.trim()}
               >
-                {isSending ? 'Sending...' : 'Send'}
+                {isSending ? 'Отправка...' : 'Отправить'}
               </button>
             </form>
           </div>
@@ -247,56 +283,86 @@ const TripChatPage: React.FC = () => {
             <h2>Trip Details</h2>
             
             <div className="map-section">
-              {(mapData && !isMapLoading) ? (
-                <MapDisplay 
-                  points={[...mapData.points, ...mapData.chat_suggestions]}
-                  center={mapData.center}
-                  city={mapData.city}
-                />
-              ) : (
-                <div className="map-placeholder">
-                  <p>Loading map data...</p>
-                </div>
-              )}
+              <MapDisplay
+                points={computeMapPoints(mapData, latestChatPoints)}
+                center={mapData?.center || null}
+                city={mapData?.city || route?.city || ''}
+              />
             </div>
             
             <div className="route-points-section">
-              <h3>Route Points</h3>
-              {routePage ? (
-                <div className="route-points-list">
-                  {routePage.route_points.map((point, index) => (
-                    <div key={point.location_id} className="route-point-item">
-                      <div className="point-icon">{index + 1}</div>
-                      <div className="point-details">
-                        <h4>{point.name}</h4>
-                        <p>{point.category} • {routePage.route.city}</p>
+              <h3>Места маршрута</h3>
+              {(() => {
+                const allMapPoints = computeMapPoints(mapData, latestChatPoints);
+                const routePoints = routePage?.route_points ?? [];
+                type DisplayPoint = { location_id: string; name: string; category: string; latitude: number; longitude: number; day?: number; day_number?: number; reason?: string };
+                const displayPoints: DisplayPoint[] = routePoints.length > 0 ? routePoints : allMapPoints;
+
+                if (!routePage && latestChatPoints.length === 0 && !mapData) {
+                  return <p className="loading">Загрузка...</p>;
+                }
+                if (displayPoints.length === 0) {
+                  return <p className="route-points-empty">Спросите ассистента — он предложит места и они появятся здесь</p>;
+                }
+
+                // Группируем по дням
+                const grouped = new Map<number, DisplayPoint[]>();
+                for (const point of displayPoints) {
+                  const day = point.day ?? point.day_number ?? 0;
+                  if (!grouped.has(day)) grouped.set(day, []);
+                  grouped.get(day)!.push(point);
+                }
+                const sortedDays = Array.from(grouped.keys()).sort((a, b) => a - b);
+                const hasMultipleDays = sortedDays.length > 1 || (sortedDays.length === 1 && sortedDays[0] > 0);
+
+                const DAY_COLORS = ['#e05c5c','#4a90d9','#5cb85c','#f0a500','#9b59b6','#17a2b8','#e67e22','#2ecc71'];
+                const colorForDay = (d: number) => d > 0 ? DAY_COLORS[(d - 1) % DAY_COLORS.length] : '#667b68';
+
+                return (
+                  <div className="route-points-list">
+                    {sortedDays.map(day => (
+                      <div key={day} className="route-day-group">
+                        {hasMultipleDays && (
+                          <div
+                            className="route-day-header"
+                            style={{ borderLeftColor: colorForDay(day) }}
+                          >
+                            {day > 0 ? `День ${day}` : 'Предложения'}
+                          </div>
+                        )}
+                        {grouped.get(day)!.map((point, indexInDay) => (
+                          <div key={point.location_id} className="route-point-item">
+                            <div
+                              className="point-icon"
+                              style={{ backgroundColor: colorForDay(day) }}
+                            >
+                              {hasMultipleDays ? indexInDay + 1 : displayPoints.indexOf(point) + 1}
+                            </div>
+                            <div className="point-details">
+                              <h4>{point.name}</h4>
+                              <p className="point-meta">
+                                {point.category}
+                                {point.reason ? ` · ${point.reason}` : ''}
+                              </p>
+                            </div>
+                            <button
+                              className="show-on-map-button"
+                              onClick={() => {
+                                const found = allMapPoints.find(p => p.location_id === point.location_id) ?? point;
+                                window.dispatchEvent(new CustomEvent('showPointOnMap', {
+                                  detail: { latitude: found.latitude, longitude: found.longitude }
+                                }));
+                              }}
+                            >
+                              На карте
+                            </button>
+                          </div>
+                        ))}
                       </div>
-                      <button 
-                        className="show-on-map-button"
-                        onClick={() => {
-                          if (mapData) {
-                            const mapPoints = [...mapData.points, ...mapData.chat_suggestions];
-                            const mapPoint = mapPoints.find(p => p.location_id === point.location_id);
-                            if (mapPoint) {
-                              const event = new CustomEvent('showPointOnMap', { 
-                                detail: { 
-                                  latitude: mapPoint.latitude, 
-                                  longitude: mapPoint.longitude 
-                                } 
-                              });
-                              window.dispatchEvent(event);
-                            }
-                          }
-                        }}
-                      >
-                        Показать на карте
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p>Loading route points...</p>
-              )}
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
             
             <div className="weather-section">
