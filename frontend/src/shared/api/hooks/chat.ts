@@ -21,7 +21,7 @@ export const useSendRouteMessage = (routeId: string) => {
       queryClient.invalidateQueries({ queryKey: [CHAT_QUERY_KEY, routeId] });
       
       // Also update map data with new points
-      queryClient.setQueryData(['map', routeId], (oldData: unknown) => {
+      queryClient.setQueryData(['routes', 'map', routeId], (oldData: unknown) => {
         if (oldData && typeof oldData === 'object' && data.map_points) {
           const oldDataObj = oldData as Record<string, unknown>;
           return {
