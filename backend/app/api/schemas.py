@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
@@ -153,6 +153,7 @@ class ApiChatMessageResponse(BaseModel):
     sender: ChatSender
     text: str
     formattedText: str
+    assistantStructured: Optional[dict[str, Any]] = None
     createdAt: str
 
     @classmethod
@@ -165,6 +166,7 @@ class ApiChatMessageResponse(BaseModel):
         text: str,
         created_at: datetime,
         formatted_text: str,
+        assistant_structured: Optional[dict[str, Any]] = None,
     ) -> "ApiChatMessageResponse":
         return cls(
             id=str(message_id),
@@ -173,6 +175,7 @@ class ApiChatMessageResponse(BaseModel):
             sender=sender,  # type: ignore[arg-type]
             text=text,
             formattedText=formatted_text,
+            assistantStructured=assistant_structured,
             createdAt=created_at.isoformat(),
         )
 
@@ -185,13 +188,14 @@ class ApiChatMapPoint(BaseModel):
     longitude: float
     day: Optional[int] = None
     reason: Optional[str] = None
+    source: Literal["db", "external"] = "db"
 
 
 class ApiChatSendResponse(BaseModel):
     user_message: ApiChatMessageResponse
     assistant_message: ApiChatMessageResponse
     map_points: list[ApiChatMapPoint] = Field(default_factory=list)
-    assistant_structured: dict = Field(default_factory=dict)
+    assistant_structured: dict[str, Any] = Field(default_factory=dict)
 
 
 class ApiRoutePointResponse(BaseModel):

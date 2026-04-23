@@ -6,6 +6,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from .. import models
+from ..integrations.geocoding import resolve_place_coords
 
 
 def format_assistant_text(raw_text: str) -> str:
@@ -46,6 +47,7 @@ def extract_map_points_from_text(
 
     selected: list[models.Location] = []
     metadata_by_location_id: dict[int, dict[str, Any]] = {}
+    output_external: list[dict] = []
 
     # 0) Prefer structured places from model JSON.
     if structured_places:
@@ -56,14 +58,17 @@ def extract_map_points_from_text(
             if not isinstance(raw_name, str) or not raw_name.strip():
                 continue
             matched = _match_location_by_name(city_locations, raw_name)
-            if matched is None:
-                continue
-            if matched not in selected:
-                selected.append(matched)
-            metadata_by_location_id[matched.id] = {
-                "day": place.get("day"),
-                "reason": place.get("reason"),
-            }
+            if matched is not None:
+                if matched not in selected:
+                    selected.append(matched)
+                metadata_by_location_id[matched.id] = {
+                    "day": place.get("day"),
+                    "reason": place.get("reason"),
+                }
+            else:
+                ext_point = _external_point_from_structured(place, city=city)
+                if ext_point is not None:
+                    output_external.append(ext_point)
             if len(selected) >= limit:
                 break
 
@@ -110,9 +115,11 @@ def extract_map_points_from_text(
                 "longitude": location.longitude,
                 "day": day_value if isinstance(day_value, int) else None,
                 "reason": reason_value if isinstance(reason_value, str) else None,
+                "source": "db",
             }
         )
-    return output
+    combined = output + output_external
+    return combined[:limit]
 
 
 def _guess_categories(normalized_text: str) -> set[str]:
@@ -128,6 +135,39 @@ def _guess_categories(normalized_text: str) -> set[str]:
 
 def _normalize(value: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[^a-zA-Zа-яА-Я0-9 ]", " ", (value or "").lower())).strip()
+
+
+def _external_point_from_structured(place: dict[str, Any], city: str) -> dict | None:
+    raw_name = place.get("name")
+    if not isinstance(raw_name, str) or not raw_name.strip():
+        return None
+    place_name = raw_name.strip()
+
+    latitude = place.get("latitude")
+    longitude = place.get("longitude")
+    if not (isinstance(latitude, (int, float)) and isinstance(longitude, (int, float))):
+        coords = resolve_place_coords(city=city, place_name=place_name)
+        if not coords:
+            return None
+        latitude, longitude = coords
+
+    category = place.get("category")
+    if not isinstance(category, str) or not category.strip():
+        category = "other"
+    day = place.get("day")
+    reason = place.get("reason")
+    slug = _normalize(place_name).replace(" ", "_")[:40] or "place"
+
+    return {
+        "location_id": f"external:{slug}",
+        "name": place_name,
+        "category": category.strip().lower(),
+        "latitude": float(latitude),
+        "longitude": float(longitude),
+        "day": day if isinstance(day, int) else None,
+        "reason": reason.strip() if isinstance(reason, str) and reason.strip() else None,
+        "source": "external",
+    }
 
 
 def _match_location_by_name(

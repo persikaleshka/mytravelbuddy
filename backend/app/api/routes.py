@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+import json
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models
@@ -241,10 +242,21 @@ async def get_route_map_data(
     )
     chat_suggestions = []
     if latest_assistant_message is not None:
+        structured_places = None
+        if latest_assistant_message.ai_payload:
+            try:
+                payload = json.loads(latest_assistant_message.ai_payload)
+                if isinstance(payload, dict):
+                    maybe_places = payload.get("places")
+                    if isinstance(maybe_places, list):
+                        structured_places = maybe_places
+            except Exception:
+                structured_places = None
         chat_suggestions = extract_map_points_from_text(
             db=db,
             city=route.city,
             assistant_text=latest_assistant_message.text,
+            structured_places=structured_places,
         )
 
     return {

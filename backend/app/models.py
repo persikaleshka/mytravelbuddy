@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Date
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Date, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
@@ -71,6 +71,7 @@ class ChatMessage(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     sender = Column(String, nullable=False)  # "user" | "assistant"
     text = Column(String, nullable=False)
+    ai_payload = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     route = relationship("TravelRoute", back_populates="chat_messages")

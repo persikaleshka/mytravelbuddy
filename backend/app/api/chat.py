@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+import json
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models
@@ -37,6 +38,14 @@ def _to_response(message: models.ChatMessage) -> ApiChatMessageResponse:
     formatted_text = (
         format_assistant_text(message.text) if message.sender == "assistant" else message.text
     )
+    assistant_structured = None
+    if message.sender == "assistant" and message.ai_payload:
+        try:
+            parsed = json.loads(message.ai_payload)
+            if isinstance(parsed, dict):
+                assistant_structured = parsed
+        except Exception:
+            assistant_structured = None
     return ApiChatMessageResponse.from_db(
         message_id=message.id,
         route_id=message.route_id,
@@ -45,6 +54,7 @@ def _to_response(message: models.ChatMessage) -> ApiChatMessageResponse:
         text=message.text,
         created_at=message.created_at,
         formatted_text=formatted_text,
+        assistant_structured=assistant_structured,
     )
 
 
@@ -153,6 +163,7 @@ async def send_route_message(
             user_id=current_user.id,
             sender="assistant",
             text=formatted_assistant_reply,
+            ai_payload=json.dumps(assistant_structured, ensure_ascii=False),
         )
         db.add(assistant_message)
         db.commit()
