@@ -10,9 +10,7 @@ import {
 } from '../routes';
 import type { CreateRouteRequest, UpdateRouteRequest, TravelRoute, RoutePageResponse } from '../types/routes';
 import type { MapResponse } from '../types/map';
-
-
-const ROUTES_QUERY_KEY = 'routes';
+import { ROUTES_QUERY_KEY } from '../query-keys';
 
 
 export const useUserRoutes = () => {
@@ -27,6 +25,7 @@ export const useRoute = (id: string) => {
   return useQuery<TravelRoute, Error>({
     queryKey: [ROUTES_QUERY_KEY, id],
     queryFn: () => getRoute(id),
+    enabled: !!id,
   });
 };
 
@@ -34,6 +33,7 @@ export const useRoutePage = (id: string) => {
   return useQuery<RoutePageResponse, Error>({
     queryKey: [ROUTES_QUERY_KEY, 'page', id],
     queryFn: () => getRoutePage(id),
+    enabled: !!id,
   });
 };
 
@@ -41,17 +41,19 @@ export const useRouteMapData = (id: string) => {
   return useQuery<MapResponse, Error>({
     queryKey: [ROUTES_QUERY_KEY, 'map', id],
     queryFn: () => getRouteMapData(id),
+    enabled: !!id,
+    staleTime: 0,
+    gcTime: 0,
   });
 };
 
 
 export const useCreateRoute = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation<TravelRoute, Error, CreateRouteRequest>({
     mutationFn: (data: CreateRouteRequest) => createRoute(data),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({ queryKey: [ROUTES_QUERY_KEY] });
     },
   });

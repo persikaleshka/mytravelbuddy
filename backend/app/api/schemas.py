@@ -172,7 +172,7 @@ class ApiChatMessageResponse(BaseModel):
             id=str(message_id),
             routeId=str(route_id),
             userId=str(user_id),
-            sender=sender,  # type: ignore[arg-type]
+            sender=sender,
             text=text,
             formattedText=formatted_text,
             assistantStructured=assistant_structured,

@@ -41,15 +41,3 @@ export interface MapPoint {
   day?: number;
   reason?: string;
 }
-
-export interface MapPoint {
-  location_id: string;
-  name: string;
-  category: string;
-  latitude: number;
-  longitude: number;
-  day_number?: number;
-  order_in_day?: number;
-  day?: number;
-  reason?: string;
-}

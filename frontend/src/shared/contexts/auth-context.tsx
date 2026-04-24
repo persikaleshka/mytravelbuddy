@@ -1,4 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { setUnauthorizedHandler } from '@/shared/api';
 
 interface User {
   id: string;
@@ -8,6 +11,7 @@ interface User {
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isInitializing: boolean;
   user: User | null;
   login: (token: string, userData: User) => void;
   logout: () => void;
@@ -21,23 +25,24 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Check if user is already logged in on app start
     const token = localStorage.getItem('token');
     const userName = localStorage.getItem('userName');
     const userEmail = localStorage.getItem('userEmail');
     const userId = localStorage.getItem('userId');
-    
+
     if (token && userName && userEmail) {
       setIsAuthenticated(true);
       setUser({
         id: userId || '',
         email: userEmail,
-        name: userName
+        name: userName,
       });
     }
+    setIsInitializing(false);
   }, []);
 
   const login = (token: string, userData: User) => {
@@ -49,17 +54,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(userData);
   };
 
-  const logout = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const logout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('userName');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userId');
     setIsAuthenticated(false);
     setUser(null);
-  };
+    queryClient.clear();
+    navigate('/login');
+  }, [navigate, queryClient]);
+
+  useEffect(() => {
+    setUnauthorizedHandler(logout);
+  }, [logout]);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isInitializing, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

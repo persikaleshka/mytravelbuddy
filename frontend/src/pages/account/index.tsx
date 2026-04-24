@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/shared/contexts/auth-context';
 import './Account.css';
 
 const AccountPage: React.FC = () => {
   const navigate = useNavigate();
-  
-  // Get user info from localStorage
+  const { t } = useTranslation();
+  const { user: authUser, logout } = useAuth();
+
   const user = {
-    name: localStorage.getItem('userName') || 'User',
-    email: localStorage.getItem('userEmail') || 'user@example.com'
+    name: authUser?.name || 'User',
+    email: authUser?.email || '',
   };
 
-  // Account settings state
   const [interests, setInterests] = useState<string>(localStorage.getItem('userInterests') || '');
   const [budget, setBudget] = useState<string>(localStorage.getItem('userBudget') || '');
   const [tripStyle, setTripStyle] = useState<string>(localStorage.getItem('userTripStyle') || '');
@@ -20,38 +22,26 @@ const AccountPage: React.FC = () => {
 
   const handleSave = () => {
     setIsSaving(true);
-    
-    // Save to localStorage
     localStorage.setItem('userInterests', interests);
     localStorage.setItem('userBudget', budget);
     localStorage.setItem('userTripStyle', tripStyle);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsSaving(false);
-      setIsSaved(true);
-      // Navigate to profile page after saving
-      setTimeout(() => {
-        navigate('/profile');
-      }, 1000);
-    }, 1000);
+    setIsSaving(false);
+    setIsSaved(true);
+    navigate('/profile');
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userEmail');
     localStorage.removeItem('userInterests');
     localStorage.removeItem('userBudget');
     localStorage.removeItem('userTripStyle');
-    navigate('/');
+    logout();
   };
 
   return (
     <div className="account-page">
       <div className="account-container">
-        <h1>Account Settings</h1>
-        
+        <h1>{t('account.title')}</h1>
+
         <div className="account-card">
           <div className="account-header">
             <div className="account-avatar">
@@ -62,68 +52,51 @@ const AccountPage: React.FC = () => {
               <p>{user.email}</p>
             </div>
           </div>
-          
+
           <div className="account-form">
             <div className="form-group">
-              <label htmlFor="interests">Interests</label>
+              <label htmlFor="interests">{t('account.interests')}</label>
               <textarea
                 id="interests"
                 value={interests}
                 onChange={(e) => setInterests(e.target.value)}
-                placeholder="What are your travel interests? (e.g., hiking, museums, food, beaches)"
+                placeholder={t('account.interestsPlaceholder')}
                 rows={4}
               />
             </div>
-            
+
             <div className="form-group">
-              <label htmlFor="budget">Budget</label>
-              <select
-                id="budget"
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-              >
-                <option value="">Select your budget range</option>
-                <option value="low">Low ($ - $500)</option>
-                <option value="medium">Medium ($500 - $1500)</option>
-                <option value="high">High ($1500+)</option>
+              <label htmlFor="budget">{t('account.budget')}</label>
+              <select id="budget" value={budget} onChange={(e) => setBudget(e.target.value)}>
+                <option value="">{t('account.budgetPlaceholder')}</option>
+                <option value="low">{t('account.budget_low')}</option>
+                <option value="medium">{t('account.budget_medium')}</option>
+                <option value="high">{t('account.budget_high')}</option>
               </select>
             </div>
-            
+
             <div className="form-group">
-              <label htmlFor="tripStyle">Style of Trip</label>
-              <select
-                id="tripStyle"
-                value={tripStyle}
-                onChange={(e) => setTripStyle(e.target.value)}
-              >
-                <option value="">Select your preferred trip style</option>
-                <option value="adventure">Adventure</option>
-                <option value="relaxation">Relaxation</option>
-                <option value="cultural">Cultural</option>
-                <option value="luxury">Luxury</option>
-                <option value="backpacking">Backpacking</option>
+              <label htmlFor="tripStyle">{t('account.tripStyle')}</label>
+              <select id="tripStyle" value={tripStyle} onChange={(e) => setTripStyle(e.target.value)}>
+                <option value="">{t('account.tripStylePlaceholder')}</option>
+                <option value="adventure">{t('account.style_adventure')}</option>
+                <option value="relaxation">{t('account.style_relaxation')}</option>
+                <option value="cultural">{t('account.style_cultural')}</option>
+                <option value="luxury">{t('account.style_luxury')}</option>
+                <option value="backpacking">{t('account.style_backpacking')}</option>
               </select>
             </div>
-            
+
             <div className="account-actions">
-              <button 
-                className="btn btn-outline"
-                onClick={handleLogout}
-              >
-                Logout
+              <button className="btn btn-outline" onClick={handleLogout}>
+                {t('account.logout')}
               </button>
               {!isSaved ? (
-                <button 
-                  className="btn btn-primary"
-                  onClick={handleSave}
-                  disabled={isSaving}
-                >
-                  {isSaving ? 'Saving...' : 'Save Settings'}
+                <button className="btn btn-primary" onClick={handleSave} disabled={isSaving}>
+                  {isSaving ? t('account.saving') : t('account.save')}
                 </button>
               ) : (
-                <div className="save-success">
-                  Settings saved successfully! Redirecting to profile...
-                </div>
+                <div className="save-success">{t('account.savedSuccess')}</div>
               )}
             </div>
           </div>

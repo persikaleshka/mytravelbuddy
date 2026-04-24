@@ -1,0 +1,167 @@
+{
+  "header": {
+    "allTrips": "All Trips",
+    "profile": "Profile",
+    "login": "Log in"
+  },
+  "home": {
+    "heroTitle": "Discover Your Perfect Travel Experience",
+    "heroSubtitle": "Create personalized travel itineraries with recommendations tailored to your interests and budget.",
+    "getStarted": "Get Started",
+    "welcomeTitle": "Welcome to MyTravelBuddy",
+    "welcomeSubtitle": "Your ultimate travel companion for planning unforgettable journeys."
+  },
+  "login": {
+    "brandSlogan": "Plan your perfect journey",
+    "title": "Welcome back",
+    "subtitle": "Sign in to your account",
+    "email": "Email",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "submit": "Sign in",
+    "submitting": "Signing in...",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign up",
+    "visualTitle": "Start planning your dream trip",
+    "visualSubtitle": "Join thousands of travelers who use MyTravelBuddy to create perfect itineraries",
+    "errorDefault": "Failed to login. Please try again."
+  },
+  "register": {
+    "brandSlogan": "Plan your perfect journey",
+    "title": "Create an account",
+    "subtitle": "Join thousands of travelers planning perfect trips",
+    "name": "Full Name",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Create account",
+    "submitting": "Creating account...",
+    "hasAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "visualTitle": "Start planning your dream trip",
+    "visualSubtitle": "Join thousands of travelers who use MyTravelBuddy to create perfect itineraries",
+    "errorDefault": "Failed to register. Please try again."
+  },
+  "dashboard": {
+    "title": "My Trips",
+    "createTrip": "Create Trip",
+    "loading": "Loading your trips...",
+    "errorLoading": "Error loading trips: {{message}}",
+    "empty": "You don't have any trips yet.",
+    "createFirst": "Create your first trip",
+    "city": "City: {{city}}",
+    "dateStart": "Start: {{date}}",
+    "dateEnd": "End: {{date}}"
+  },
+  "createTrip": {
+    "title": "Create New Trip",
+    "tripName": "Trip Name",
+    "city": "City",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "interests": "Interests",
+    "interestsPlaceholder": "E.g.: museums, parks, cafes, architecture",
+    "cancel": "Cancel",
+    "submit": "Create Trip",
+    "submitting": "Creating...",
+    "errorCreating": "Error creating trip: {{message}}",
+    "errorDefault": "Unknown error"
+  },
+  "profile": {
+    "title": "Profile",
+    "travelPreferences": "Travel Preferences",
+    "interests": "Interests:",
+    "budget": "Budget:",
+    "tripStyle": "Trip Style:",
+    "notSet": "Not set",
+    "edit": "Edit",
+    "logout": "Logout",
+    "budget_low": "Low ($ – $500)",
+    "budget_medium": "Medium ($500 – $1500)",
+    "budget_high": "High ($1500+)",
+    "style_adventure": "Adventure",
+    "style_relaxation": "Relaxation",
+    "style_cultural": "Cultural",
+    "style_luxury": "Luxury",
+    "style_backpacking": "Backpacking"
+  },
+  "account": {
+    "title": "Account Settings",
+    "interests": "Interests",
+    "interestsPlaceholder": "What are your travel interests? (e.g., hiking, museums, food, beaches)",
+    "budget": "Budget",
+    "budgetPlaceholder": "Select your budget range",
+    "budget_low": "Low ($ – $500)",
+    "budget_medium": "Medium ($500 – $1500)",
+    "budget_high": "High ($1500+)",
+    "tripStyle": "Style of Trip",
+    "tripStylePlaceholder": "Select your preferred trip style",
+    "style_adventure": "Adventure",
+    "style_relaxation": "Relaxation",
+    "style_cultural": "Cultural",
+    "style_luxury": "Luxury",
+    "style_backpacking": "Backpacking",
+    "logout": "Logout",
+    "save": "Save Settings",
+    "saving": "Saving...",
+    "savedSuccess": "Settings saved successfully! Redirecting to profile..."
+  },
+  "tripChat": {
+    "backToTrips": "← Back to Trips",
+    "deleteTrip": "Delete Trip",
+    "deleteTripConfirm": "Are you sure you want to delete trip \"{{name}}\"?",
+    "deleteFailed": "Failed to delete trip. Please try again.",
+    "tripDetails": "Trip Details",
+    "routePoints": "Trip Places",
+    "routePointsEmpty": "Ask the assistant — it will suggest places and they will appear here",
+    "dayLabel": "Day {{day}}",
+    "suggestions": "Suggestions",
+    "showOnMap": "Show on map",
+    "chat": "Chat with assistant",
+    "inputPlaceholder": "Ask the assistant about your route...",
+    "send": "Send",
+    "sending": "Sending...",
+    "loading": "Loading trip details...",
+    "errorLoading": "Error loading trip: {{message}}",
+    "errorDefault": "Unknown error",
+    "errorTooManyRequests": "Too many requests. Please wait a moment and try again.",
+    "errorNetwork": "Failed to send message. Check your connection and try again.",
+    "errorSend": "Error sending message. Please try again.",
+    "retry": "Retry",
+    "weatherLoading": "Loading weather data...",
+    "mapPlaceholder": "Ask the assistant — it will suggest places on the map"
+  },
+  "tripConfirmation": {
+    "title": "Trip Created Successfully!",
+    "subtitle": "Your trip has been created and saved to your account.",
+    "viewAll": "View All Trips",
+    "createAnother": "Create Another Trip"
+  },
+  "weather": {
+    "title": "Weather Forecast",
+    "noData": "No weather data available"
+  },
+  "placeCard": {
+    "day": "Day: {{day}}",
+    "reason": "Reason: {{reason}}",
+    "showOnMap": "Show on map"
+  },
+  "structured": {
+    "summary": "Summary",
+    "plan": "Plan / Tips",
+    "questions": "Questions to clarify",
+    "places": "Suggested places"
+  },
+  "notFound": {
+    "title": "404 — Page not found",
+    "subtitle": "The page you are looking for does not exist.",
+    "goHome": "Go to Home"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "goHome": "Go to Home"
+  },
+  "map": {
+    "placeholder": "Ask the assistant — it will suggest places on the map",
+    "legendDay": "Day {{day}}"
+  }
+}

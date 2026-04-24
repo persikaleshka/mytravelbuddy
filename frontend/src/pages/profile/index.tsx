@@ -1,95 +1,76 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/shared/contexts/auth-context';
 import './Profile.css';
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
-  
-  // Get account settings from localStorage
+
   const accountSettings = {
-    interests: localStorage.getItem('userInterests') || 'Not set',
-    budget: localStorage.getItem('userBudget') || 'Not set',
-    tripStyle: localStorage.getItem('userTripStyle') || 'Not set'
+    interests: localStorage.getItem('userInterests') || t('profile.notSet'),
+    budget: localStorage.getItem('userBudget') || '',
+    tripStyle: localStorage.getItem('userTripStyle') || '',
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
-  const handleAccountSettings = () => {
-    navigate('/account');
-  };
-
-  // Format budget display
   const formatBudget = (budget: string) => {
-    switch (budget) {
-      case 'low': return 'Low ($ - $500)';
-      case 'medium': return 'Medium ($500 - $1500)';
-      case 'high': return 'High ($1500+)';
-      default: return budget;
-    }
+    if (!budget) return t('profile.notSet');
+    const key = `profile.budget_${budget}`;
+    const translated = t(key);
+    return translated === key ? budget : translated;
   };
 
-  // Format trip style display
   const formatTripStyle = (style: string) => {
-    switch (style) {
-      case 'adventure': return 'Adventure';
-      case 'relaxation': return 'Relaxation';
-      case 'cultural': return 'Cultural';
-      case 'luxury': return 'Luxury';
-      case 'backpacking': return 'Backpacking';
-      default: return style;
-    }
+    if (!style) return t('profile.notSet');
+    const key = `profile.style_${style}`;
+    const translated = t(key);
+    return translated === key ? style : translated;
   };
 
   return (
     <div className="profile-page">
       <div className="profile-container">
-        <h1>Profile</h1>
-        
+        <h1>{t('profile.title')}</h1>
+
         <div className="profile-card">
           <div className="profile-header">
             <div className="profile-avatar">
-              <span>{user?.name.charAt(0).toUpperCase()}</span>
+              <span>{user?.name?.charAt(0)?.toUpperCase() ?? '?'}</span>
             </div>
             <div className="profile-info">
               <h2>{user?.name}</h2>
               <p>{user?.email}</p>
             </div>
           </div>
-          
+
           <div className="account-details">
-            <h3>Travel Preferences</h3>
+            <h3>{t('profile.travelPreferences')}</h3>
             <div className="detail-item">
-              <span className="detail-label">Interests:</span>
+              <span className="detail-label">{t('profile.interests')}</span>
               <span className="detail-value">{accountSettings.interests}</span>
             </div>
             <div className="detail-item">
-              <span className="detail-label">Budget:</span>
+              <span className="detail-label">{t('profile.budget')}</span>
               <span className="detail-value">{formatBudget(accountSettings.budget)}</span>
             </div>
             <div className="detail-item">
-              <span className="detail-label">Trip Style:</span>
+              <span className="detail-label">{t('profile.tripStyle')}</span>
               <span className="detail-value">{formatTripStyle(accountSettings.tripStyle)}</span>
             </div>
           </div>
-          
+
           <div className="profile-actions">
-            <button 
+            <button
               className="btn btn-primary"
-              onClick={handleAccountSettings}
+              onClick={() => navigate('/account')}
               style={{ marginRight: '1rem' }}
             >
-              Edit
+              {t('profile.edit')}
             </button>
-            <button 
-              className="btn btn-primary"
-              onClick={handleLogout}
-            >
-              Logout
+            <button className="btn btn-primary" onClick={logout}>
+              {t('profile.logout')}
             </button>
           </div>
         </div>

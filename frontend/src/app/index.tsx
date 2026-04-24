@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/shared/contexts/auth-context';
+import PrivateRoute from '@/shared/components/PrivateRoute';
 import Header from '@/widgets/header';
 import HomePage from '@/pages/home';
 import LoginPage from '@/pages/login';
@@ -10,6 +11,7 @@ import ProfilePage from '@/pages/profile';
 import AccountPage from '@/pages/account';
 import TripConfirmationPage from '@/pages/trip-confirmation';
 import TripChatPage from '@/pages/trip-chat';
+import NotFoundPage from '@/pages/not-found';
 
 function App() {
   return (
@@ -19,15 +21,20 @@ function App() {
           <Header />
           <main>
             <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<LoginPage />} />
+              <Route path="/"        element={<HomePage />} />
+              <Route path="/login"   element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/create-trip" element={<CreateTripPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/account" element={<AccountPage />} />
-              <Route path="/trip-confirmation" element={<TripConfirmationPage />} />
-              <Route path="/trip/:id" element={<TripChatPage />} />
+
+              <Route element={<PrivateRoute />}>
+                <Route path="/dashboard"         element={<DashboardPage />} />
+                <Route path="/create-trip"       element={<CreateTripPage />} />
+                <Route path="/profile"           element={<ProfilePage />} />
+                <Route path="/account"           element={<AccountPage />} />
+                <Route path="/trip-confirmation" element={<TripConfirmationPage />} />
+                <Route path="/trip/:id"          element={<TripChatPage />} />
+              </Route>
+
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </main>
         </div>

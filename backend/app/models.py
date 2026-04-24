@@ -19,20 +19,20 @@ class UserPreference(Base):
     __tablename__ = "user_preferences"
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
-    interests = Column(String, default="")  # JSON-like string: "museum,cafe,park"
+    interests = Column(String, default="")
     budget = Column(Float, default=0.0)
-    travel_style = Column(String, default="relaxed")  # "relaxed", "active", "cultural"
+    travel_style = Column(String, default="relaxed")
     user = relationship("User", back_populates="preferences")
 
 class Location(Base):
     __tablename__ = "locations"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    category = Column(String, nullable=False)  # "museum", "cafe", "park"
+    category = Column(String, nullable=False)
     city = Column(String, nullable=False)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
-    price_level = Column(Integer, nullable=False)  # 1-5
+    price_level = Column(Integer, nullable=False)
     description = Column(String)
     rating = Column(Float, default=0.0)
 
@@ -69,7 +69,7 @@ class ChatMessage(Base):
     id = Column(Integer, primary_key=True)
     route_id = Column(Integer, ForeignKey("travel_routes.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    sender = Column(String, nullable=False)  # "user" | "assistant"
+    sender = Column(String, nullable=False)
     text = Column(String, nullable=False)
     ai_payload = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

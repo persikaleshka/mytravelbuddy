@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCreateRoute } from '@/shared/api/hooks/routes';
 import type { CreateRouteRequest } from '@/shared/api/types/routes';
 import './CreateTrip.css';
@@ -11,56 +13,40 @@ const CreateTripPage: React.FC = () => {
   const [endDate, setEndDate] = useState('');
   const [preferences, setPreferences] = useState('');
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const { mutate: createRoute, isPending, isError, error } = useCreateRoute();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Преобразуем даты в нужный формат
     const formattedStartDate = startDate ? new Date(startDate).toISOString().split('T')[0] : '';
     const formattedEndDate = endDate ? new Date(endDate).toISOString().split('T')[0] : '';
-    
-    // Преобразуем предпочтения в массив location_ids (заглушка)
-    const locationIds = preferences ? preferences.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id)) : [];
-    
-    // Создаем объект items для отправки на бэкенд
-    const items = locationIds.map((locationId, index) => ({
-      location_id: locationId,
-      day_number: 1,
-      order_in_day: index + 1
-    }));
-    
+
     createRoute(
-      { 
-        name, 
-        city,
-        start_date: formattedStartDate,
-        end_date: formattedEndDate,
-        items
-      } as CreateRouteRequest,
+      { name, city, start_date: formattedStartDate, end_date: formattedEndDate, items: [] } as CreateRouteRequest,
       {
         onSuccess: (createdRoute) => {
-          navigate(`/trip/${createdRoute.id}`);
+          queryClient.removeQueries({ queryKey: ['routes', createdRoute.id] });
+          queryClient.removeQueries({ queryKey: ['routes', 'page', createdRoute.id] });
+          queryClient.removeQueries({ queryKey: ['routes', 'map', createdRoute.id] });
+          queryClient.removeQueries({ queryKey: ['chat', createdRoute.id] });
+          navigate(`/trip/${createdRoute.id}`, { state: { isNew: true } });
         },
         onError: (err) => {
           console.error('Failed to create trip:', err);
-        }
+        },
       }
     );
-  };
-
-  const handleCancel = () => {
-    navigate('/dashboard');
   };
 
   return (
     <div className="create-trip-page">
       <div className="create-trip-container">
-        <h1>Create New Trip</h1>
-        
+        <h1>{t('createTrip.title')}</h1>
+
         <form onSubmit={handleSubmit} className="create-trip-form">
           <div className="form-group">
-            <label htmlFor="name">Trip Name</label>
+            <label htmlFor="name">{t('createTrip.tripName')}</label>
             <input
               type="text"
               id="name"
@@ -70,9 +56,9 @@ const CreateTripPage: React.FC = () => {
               className={isError ? 'error' : ''}
             />
           </div>
-          
+
           <div className="form-group">
-            <label htmlFor="city">City</label>
+            <label htmlFor="city">{t('createTrip.city')}</label>
             <input
               type="text"
               id="city"
@@ -82,10 +68,10 @@ const CreateTripPage: React.FC = () => {
               className={isError ? 'error' : ''}
             />
           </div>
-          
+
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="start-date">Start Date</label>
+              <label htmlFor="start-date">{t('createTrip.startDate')}</label>
               <input
                 type="date"
                 id="start-date"
@@ -95,9 +81,8 @@ const CreateTripPage: React.FC = () => {
                 className={isError ? 'error' : ''}
               />
             </div>
-            
             <div className="form-group">
-              <label htmlFor="end-date">End Date</label>
+              <label htmlFor="end-date">{t('createTrip.endDate')}</label>
               <input
                 type="date"
                 id="end-date"
@@ -108,40 +93,30 @@ const CreateTripPage: React.FC = () => {
               />
             </div>
           </div>
-          
-<div className="form-group">
-            <label htmlFor="preferences">Preferences</label>
+
+          <div className="form-group">
+            <label htmlFor="preferences">{t('createTrip.interests')}</label>
             <textarea
               id="preferences"
               value={preferences}
               onChange={(e) => setPreferences(e.target.value)}
-              placeholder="Enter location IDs separated by commas (e.g., 1, 2, 3)"
-              rows={4}
+              placeholder={t('createTrip.interestsPlaceholder')}
+              rows={3}
             />
-            <p className="form-help">Enter location IDs separated by commas</p>
           </div>
-          
+
           {isError && (
             <div className="error-message">
-              Error creating trip: {error?.message || 'Unknown error'}
+              {t('createTrip.errorCreating', { message: error?.message || t('createTrip.errorDefault') })}
             </div>
           )}
-          
+
           <div className="form-actions">
-            <button 
-              type="button" 
-              className="btn btn-primary"
-              onClick={handleCancel}
-              disabled={isPending}
-            >
-              Cancel
+            <button type="button" className="btn btn-outline" onClick={() => navigate('/dashboard')} disabled={isPending}>
+              {t('createTrip.cancel')}
             </button>
-            <button 
-              type="submit" 
-              className="btn btn-primary"
-              disabled={isPending}
-            >
-              {isPending ? 'Creating...' : 'Create Trip'}
+            <button type="submit" className="btn btn-primary" disabled={isPending}>
+              {isPending ? t('createTrip.submitting') : t('createTrip.submit')}
             </button>
           </div>
         </form>

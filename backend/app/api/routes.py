@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 
 from .. import auth, database, models
 from ..integrations import get_city_weather_forecast
-from ..services import extract_map_points_from_text
 from .schemas import (
     ApiRouteCreate,
     ApiRoutePageResponse,
@@ -43,27 +42,6 @@ def _get_existing_location_ids(location_ids: set[int], db: Session) -> set[int]:
     return {location_id for (location_id,) in existing_locations}
 
 
-def _ensure_user_preferences(user: models.User, db: Session) -> models.UserPreference:
-    if user.preferences is not None:
-        return user.preferences
-    pref = models.UserPreference(
-        user_id=user.id,
-        interests="",
-        budget=0.0,
-        travel_style="relaxed",
-    )
-    db.add(pref)
-    db.flush()
-    return pref
-
-
-def _save_preferences_from_items(
-    user: models.User,
-    items: list,
-    db: Session,
-):
-    pref = _ensure_user_preferences(user, db)
-    pref.interests = ",".join(str(item.location_id) for item in items)
 
 
 def _sync_route_items(
@@ -136,7 +114,6 @@ async def create_route(
         db.add(db_route)
         db.flush()
 
-        _save_preferences_from_items(current_user, route_data.items, db)
         _sync_route_items(db_route.id, route_data.items, db)
         db.commit()
         db.refresh(db_route)
@@ -183,7 +160,7 @@ async def get_route_page(
         preferences = [
             value.strip()
             for value in current_user.preferences.interests.split(",")
-            if value.strip()
+            if value.strip() and not value.strip().isdigit()
         ]
 
     weather = get_city_weather_forecast(
@@ -240,36 +217,42 @@ async def get_route_map_data(
         .order_by(models.ChatMessage.created_at.asc(), models.ChatMessage.id.asc())
         .all()
     )
-    seen: dict[str, dict] = {}
-    for msg in all_assistant_messages:
-        structured_places = None
-        if msg.ai_payload:
-            try:
-                payload = json.loads(msg.ai_payload)
-                if isinstance(payload, dict):
-                    maybe_places = payload.get("places")
-                    if isinstance(maybe_places, list):
-                        structured_places = maybe_places
-            except Exception:
-                pass
-        points = extract_map_points_from_text(
-            db=db,
-            city=route.city,
-            assistant_text=msg.text,
-            structured_places=structured_places,
-        )
-        for p in points:
-            key = f"{p['location_id']}::{p.get('day') or 0}"
-            seen[key] = p
 
     by_location: dict[str, dict] = {}
-    for p in seen.values():
-        loc_id = p["location_id"]
-        existing = by_location.get(loc_id)
-        if existing is None:
-            by_location[loc_id] = p
-        elif not existing.get("day") and p.get("day"):
-            by_location[loc_id] = p
+    for msg in all_assistant_messages:
+        if not msg.ai_payload:
+            continue
+        try:
+            payload = json.loads(msg.ai_payload)
+        except Exception:
+            continue
+        if not isinstance(payload, dict):
+            continue
+        places = payload.get("places")
+        if not isinstance(places, list):
+            continue
+        for place in places:
+            if not isinstance(place, dict):
+                continue
+            name = (place.get("name") or "").strip()
+            lat = place.get("latitude")
+            lon = place.get("longitude")
+            if not name or not lat or not lon:
+                continue
+            loc_id = place.get("location_id") or name
+            entry = {
+                "location_id": str(loc_id),
+                "name": name,
+                "category": (place.get("category") or "other").strip(),
+                "latitude": float(lat),
+                "longitude": float(lon),
+                "day": place.get("day") if isinstance(place.get("day"), int) else None,
+                "reason": place.get("reason") if isinstance(place.get("reason"), str) else None,
+            }
+            existing = by_location.get(str(loc_id))
+            if existing is None or (not existing.get("day") and entry.get("day")):
+                by_location[str(loc_id)] = entry
+
     chat_suggestions = list(by_location.values())
 
     return {
@@ -310,7 +293,6 @@ async def update_route(
         db.query(models.RouteItem).filter(models.RouteItem.route_id == route.id).delete(
             synchronize_session=False
         )
-        _save_preferences_from_items(current_user, payload.items, db)
         _sync_route_items(route.id, payload.items, db)
 
     db.commit()
