@@ -3,15 +3,19 @@ import { render, screen } from '@testing-library/react';
 import MapDisplay from '@/widgets/map-display';
 import type { MapPoint } from '@/shared/api/types/map';
 
-vi.mock('@pbe/react-yandex-maps', () => ({
-  YMaps: ({ children }: { children: React.ReactNode }) => children,
-  Map: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="ymap">{children}</div>
+vi.mock('react-leaflet', () => ({
+  MapContainer: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="map-container">{children}</div>
   ),
-  Placemark: ({ properties }: { properties: Record<string, string> }) => (
-    <div data-testid="placemark">{properties.hintContent}</div>
+  TileLayer: () => null,
+  Marker: ({ children, position }: { children: React.ReactNode; position: [number, number] }) => (
+    <div data-testid="marker" data-lat={position[0]} data-lng={position[1]}>{children}</div>
+  ),
+  Popup: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="popup">{children}</div>
   ),
   Polyline: () => <div data-testid="polyline" />,
+  useMap: () => ({ flyTo: vi.fn() }),
 }));
 
 const mockPoint = (overrides: Partial<MapPoint> = {}): MapPoint => ({
@@ -39,10 +43,10 @@ describe('MapDisplay', () => {
         city="Москва"
       />,
     );
-    expect(screen.getByTestId('ymap')).toBeInTheDocument();
+    expect(screen.getByTestId('map-container')).toBeInTheDocument();
   });
 
-  it('renders a placemark for each point', () => {
+  it('renders a marker for each point', () => {
     render(
       <MapDisplay
         points={[
@@ -53,7 +57,7 @@ describe('MapDisplay', () => {
         city="Москва"
       />,
     );
-    expect(screen.getAllByTestId('placemark')).toHaveLength(2);
+    expect(screen.getAllByTestId('marker')).toHaveLength(2);
     expect(screen.getByText('Третьяковка')).toBeInTheDocument();
     expect(screen.getByText('Красная площадь')).toBeInTheDocument();
   });
