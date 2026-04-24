@@ -1,3 +1,4 @@
+import logging
 import re
 from collections.abc import Sequence
 from difflib import SequenceMatcher
@@ -8,16 +9,15 @@ from sqlalchemy.orm import Session
 from .. import models
 from ..integrations.geocoding import resolve_place_coords
 
+logger = logging.getLogger(__name__)
+
 
 def format_assistant_text(raw_text: str) -> str:
     text = (raw_text or "").strip()
     if not text:
         return text
-
-    # Normalize section headers to improve readability in the chat UI.
     for header in ("Короткий вывод:", "План/советы:", "Уточнить:"):
         text = text.replace(header, f"\n{header}\n")
-
     text = re.sub(r"\s+-\s+", "\n- ", text)
     text = re.sub(r"\s+(\d+\.\s)", r"\n\1", text)
     text = re.sub(r"\n{3,}", "\n\n", text)
@@ -32,142 +32,189 @@ def extract_map_points_from_text(
     structured_places: list[dict[str, Any]] | None = None,
     limit: int = 8,
 ) -> list[dict]:
-    normalized_text = _normalize(assistant_text)
     if not city:
         return []
 
-    city_locations: Sequence[models.Location] = (
+    city = _normalize_city(city)
+    city_locations = _load_city_locations(db, city)
+
+    selected: list[models.Location] = []
+    metadata: dict[int, dict[str, Any]] = {}
+
+    if structured_places:
+        for place in structured_places[:limit]:
+            if not isinstance(place, dict):
+                continue
+            name = (place.get("name") or "").strip()
+            if not name:
+                continue
+
+            loc = _match_location_by_name(city_locations, name)
+            if loc is None:
+                loc = _resolve_and_cache(
+                    db=db,
+                    city=city,
+                    place=place,
+                    city_locations=city_locations,
+                )
+
+            if loc is not None and loc not in selected:
+                selected.append(loc)
+                metadata[loc.id] = {
+                    "day": place.get("day"),
+                    "reason": place.get("reason"),
+                }
+
+            if len(selected) >= limit:
+                break
+
+    if len(selected) < limit:
+        normalized_text = _normalize(assistant_text)
+        city_locations = _load_city_locations(db, city)
+        for loc in city_locations:
+            if loc in selected:
+                continue
+            if _normalize(loc.name) in normalized_text:
+                selected.append(loc)
+                if len(selected) >= limit:
+                    break
+
+    if len(selected) < 3:
+        normalized_text = _normalize(assistant_text)
+        preferred = _guess_categories(normalized_text)
+        if preferred:
+            city_locations = _load_city_locations(db, city)
+            for loc in city_locations:
+                if loc in selected:
+                    continue
+                if loc.category.lower() in preferred:
+                    selected.append(loc)
+                    if len(selected) >= limit:
+                        break
+
+    if not selected:
+        city_locations = _load_city_locations(db, city)
+        selected = list(city_locations[: min(limit, 5)])
+
+    output: list[dict] = []
+    seen_ids: set[int] = set()
+    for loc in selected:
+        if loc.id in seen_ids:
+            continue
+        seen_ids.add(loc.id)
+        meta = metadata.get(loc.id, {})
+        day = meta.get("day")
+        reason = meta.get("reason")
+        output.append({
+            "location_id": str(loc.id),
+            "name": loc.name,
+            "category": loc.category,
+            "latitude": loc.latitude,
+            "longitude": loc.longitude,
+            "day": day if isinstance(day, int) else None,
+            "reason": reason if isinstance(reason, str) and reason.strip() else None,
+            "source": "db",
+        })
+
+    return output[:limit]
+
+
+def _load_city_locations(db: Session, city: str) -> list[models.Location]:
+    return (
         db.query(models.Location)
         .filter(models.Location.city.ilike(city))
         .order_by(models.Location.rating.desc(), models.Location.id.asc())
         .all()
     )
-    if not city_locations:
-        return []
 
-    selected: list[models.Location] = []
-    metadata_by_location_id: dict[int, dict[str, Any]] = {}
-    output_external: list[dict] = []
 
-    # 0) Prefer structured places from model JSON.
-    if structured_places:
-        for place in structured_places:
-            if not isinstance(place, dict):
-                continue
-            raw_name = place.get("name")
-            if not isinstance(raw_name, str) or not raw_name.strip():
-                continue
-            matched = _match_location_by_name(city_locations, raw_name)
-            if matched is not None:
-                if matched not in selected:
-                    selected.append(matched)
-                metadata_by_location_id[matched.id] = {
-                    "day": place.get("day"),
-                    "reason": place.get("reason"),
-                }
-            else:
-                ext_point = _external_point_from_structured(place, city=city)
-                if ext_point is not None:
-                    output_external.append(ext_point)
-            if len(selected) >= limit:
-                break
+def _resolve_and_cache(
+    *,
+    db: Session,
+    city: str,
+    place: dict[str, Any],
+    city_locations: list[models.Location],
+) -> models.Location | None:
+    name = (place.get("name") or "").strip()
+    if not name:
+        return None
 
-    # 1) Direct name match: if assistant mentions a known location.
-    if len(selected) < limit:
-        for location in city_locations:
-            if _normalize(location.name) in normalized_text and location not in selected:
-                selected.append(location)
-                if len(selected) >= limit:
-                    break
+    city = _normalize_city(city)
 
-    # 2) Category fallback: if no direct names, infer by user intent words.
-    if not selected or len(selected) < min(limit, 3):
-        preferred_categories = _guess_categories(normalized_text)
-        if preferred_categories:
-            for location in city_locations:
-                if (
-                    location.category.lower() in preferred_categories
-                    and location not in selected
-                ):
-                    selected.append(location)
-                    if len(selected) >= limit:
-                        break
+    lat = place.get("latitude")
+    lon = place.get("longitude")
 
-    # 3) Safety fallback: always return a few city points for map rendering.
-    if not selected:
-        selected = list(city_locations[: min(limit, 5)])
+    if not (_is_coord(lat) and _is_coord(lon)):
+        coords = resolve_place_coords(city=city, place_name=name)
+        if coords is None:
+            logger.warning("Geocoding failed for %r in %r", name, city)
+            return None
+        lat, lon = coords
 
-    dedup: dict[int, models.Location] = {}
-    for item in selected:
-        dedup[item.id] = item
+    if not (_is_coord(lat) and _is_coord(lon)):
+        return None
 
-    output: list[dict] = []
-    for location in dedup.values():
-        meta = metadata_by_location_id.get(location.id, {})
-        day_value = meta.get("day")
-        reason_value = meta.get("reason")
-        output.append(
-            {
-                "location_id": str(location.id),
-                "name": location.name,
-                "category": location.category,
-                "latitude": location.latitude,
-                "longitude": location.longitude,
-                "day": day_value if isinstance(day_value, int) else None,
-                "reason": reason_value if isinstance(reason_value, str) else None,
-                "source": "db",
-            }
+    category = (place.get("category") or "other").strip().lower() or "other"
+
+    try:
+        loc = models.Location(
+            name=name,
+            city=city,
+            category=category,
+            latitude=float(lat),
+            longitude=float(lon),
+            price_level=1,
+            rating=0.0,
+            description=None,
         )
-    combined = output + output_external
-    return combined[:limit]
+        db.add(loc)
+        db.commit()
+        db.refresh(loc)
+        city_locations.append(loc)
+        logger.info("Cached new location %r (%r) in DB id=%d", name, city, loc.id)
+        return loc
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to cache location %r", name)
+        return None
+
+
+_CITY_ALIASES: dict[str, str] = {
+    "москва": "Москва", "moscow": "Москва",
+    "санкт-петербург": "Санкт-Петербург", "saint petersburg": "Санкт-Петербург", "spb": "Санкт-Петербург",
+    "махачкала": "Махачкала",
+    "сочи": "Сочи",
+    "казань": "Казань",
+    "екатеринбург": "Екатеринбург",
+    "новосибирск": "Новосибирск",
+    "краснодар": "Краснодар",
+    "владивосток": "Владивосток",
+}
+
+
+def _normalize_city(city: str) -> str:
+    return _CITY_ALIASES.get(city.strip().lower(), city.strip())
+
+
+def _is_coord(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
 def _guess_categories(normalized_text: str) -> set[str]:
     categories: set[str] = set()
-    if any(token in normalized_text for token in ("музей", "museum", "галере")):
+    if any(t in normalized_text for t in ("музей", "museum", "галере", "выставк")):
         categories.add("museum")
-    if any(token in normalized_text for token in ("кафе", "еда", "ресторан", "cafe", "food")):
+    if any(t in normalized_text for t in ("кафе", "еда", "ресторан", "cafe", "food", "coffee", "кофе")):
         categories.add("cafe")
-    if any(token in normalized_text for token in ("парк", "прогул", "вид", "walk", "park", "view")):
+    if any(t in normalized_text for t in ("парк", "прогул", "сад", "walk", "park", "garden")):
         categories.add("park")
+    if any(t in normalized_text for t in ("театр", "theater", "theatre", "спектакл")):
+        categories.add("theater")
     return categories
 
 
 def _normalize(value: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[^a-zA-Zа-яА-Я0-9 ]", " ", (value or "").lower())).strip()
-
-
-def _external_point_from_structured(place: dict[str, Any], city: str) -> dict | None:
-    raw_name = place.get("name")
-    if not isinstance(raw_name, str) or not raw_name.strip():
-        return None
-    place_name = raw_name.strip()
-
-    latitude = place.get("latitude")
-    longitude = place.get("longitude")
-    if not (isinstance(latitude, (int, float)) and isinstance(longitude, (int, float))):
-        coords = resolve_place_coords(city=city, place_name=place_name)
-        if not coords:
-            return None
-        latitude, longitude = coords
-
-    category = place.get("category")
-    if not isinstance(category, str) or not category.strip():
-        category = "other"
-    day = place.get("day")
-    reason = place.get("reason")
-    slug = _normalize(place_name).replace(" ", "_")[:40] or "place"
-
-    return {
-        "location_id": f"external:{slug}",
-        "name": place_name,
-        "category": category.strip().lower(),
-        "latitude": float(latitude),
-        "longitude": float(longitude),
-        "day": day if isinstance(day, int) else None,
-        "reason": reason.strip() if isinstance(reason, str) and reason.strip() else None,
-        "source": "external",
-    }
 
 
 def _match_location_by_name(
@@ -178,14 +225,15 @@ def _match_location_by_name(
     if not target:
         return None
 
-    best_location: models.Location | None = None
+    best: models.Location | None = None
     best_score = 0.0
-    for location in locations:
-        name = _normalize(location.name)
+
+    for loc in locations:
+        name = _normalize(loc.name)
         if not name:
             continue
         if name == target:
-            return location
+            return loc
 
         score = SequenceMatcher(None, target, name).ratio()
         if target in name or name in target:
@@ -193,8 +241,6 @@ def _match_location_by_name(
 
         if score > best_score:
             best_score = score
-            best_location = location
+            best = loc
 
-    if best_score >= 0.62:
-        return best_location
-    return None
+    return best if best_score >= 0.62 else None

@@ -13,25 +13,12 @@ export const useRouteMessages = (routeId: string) => {
 
 export const useSendRouteMessage = (routeId: string) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation<UpdatedChatSendResponse, Error, CreateChatMessageRequest>({
     mutationFn: (data: CreateChatMessageRequest) => sendRouteMessage(routeId, data),
-    onSuccess: (data) => {
-      // Invalidate and refetch messages
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [CHAT_QUERY_KEY, routeId] });
-      
-      // Also update map data with new points
-      queryClient.setQueryData(['routes', 'map', routeId], (oldData: unknown) => {
-        if (oldData && typeof oldData === 'object' && data.map_points) {
-          const oldDataObj = oldData as Record<string, unknown>;
-          return {
-            ...oldDataObj,
-            points: [...(Array.isArray(oldDataObj.points) ? oldDataObj.points : []), ...data.map_points],
-            chat_suggestions: data.map_points
-          };
-        }
-        return oldData;
-      });
+      queryClient.invalidateQueries({ queryKey: ['routes', 'map', routeId] });
     },
   });
 };

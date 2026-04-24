@@ -230,34 +230,47 @@ async def get_route_map_data(
         avg_lon = sum(point.longitude for point in route_points) / len(route_points)
         center = {"latitude": avg_lat, "longitude": avg_lon}
 
-    latest_assistant_message = (
+    all_assistant_messages = (
         db.query(models.ChatMessage)
         .filter(
             models.ChatMessage.route_id == route.id,
             models.ChatMessage.user_id == current_user.id,
             models.ChatMessage.sender == "assistant",
         )
-        .order_by(models.ChatMessage.created_at.desc(), models.ChatMessage.id.desc())
-        .first()
+        .order_by(models.ChatMessage.created_at.asc(), models.ChatMessage.id.asc())
+        .all()
     )
-    chat_suggestions = []
-    if latest_assistant_message is not None:
+    seen: dict[str, dict] = {}
+    for msg in all_assistant_messages:
         structured_places = None
-        if latest_assistant_message.ai_payload:
+        if msg.ai_payload:
             try:
-                payload = json.loads(latest_assistant_message.ai_payload)
+                payload = json.loads(msg.ai_payload)
                 if isinstance(payload, dict):
                     maybe_places = payload.get("places")
                     if isinstance(maybe_places, list):
                         structured_places = maybe_places
             except Exception:
-                structured_places = None
-        chat_suggestions = extract_map_points_from_text(
+                pass
+        points = extract_map_points_from_text(
             db=db,
             city=route.city,
-            assistant_text=latest_assistant_message.text,
+            assistant_text=msg.text,
             structured_places=structured_places,
         )
+        for p in points:
+            key = f"{p['location_id']}::{p.get('day') or 0}"
+            seen[key] = p
+
+    by_location: dict[str, dict] = {}
+    for p in seen.values():
+        loc_id = p["location_id"]
+        existing = by_location.get(loc_id)
+        if existing is None:
+            by_location[loc_id] = p
+        elif not existing.get("day") and p.get("day"):
+            by_location[loc_id] = p
+    chat_suggestions = list(by_location.values())
 
     return {
         "status": "ok",
