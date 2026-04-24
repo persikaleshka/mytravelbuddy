@@ -9,16 +9,15 @@ interface MapDisplayProps {
   city: string;
 }
 
-// Palette for days — cycles if more than 8 days
 const DAY_COLORS = [
-  '#e05c5c', // day 1 — red
-  '#4a90d9', // day 2 — blue
-  '#5cb85c', // day 3 — green
-  '#f0a500', // day 4 — amber
-  '#9b59b6', // day 5 — purple
-  '#17a2b8', // day 6 — teal
-  '#e67e22', // day 7 — orange
-  '#2ecc71', // day 8 — emerald
+  '#e05c5c',
+  '#4a90d9',
+  '#5cb85c',
+  '#f0a500',
+  '#9b59b6',
+  '#17a2b8',
+  '#e67e22',
+  '#2ecc71',
 ];
 
 function colorForDay(day: number | undefined): string {
@@ -26,7 +25,6 @@ function colorForDay(day: number | undefined): string {
   return DAY_COLORS[(day - 1) % DAY_COLORS.length];
 }
 
-// Groups points by day, preserving order within each day
 function groupByDay(points: MapPoint[]): globalThis.Map<number, MapPoint[]> {
   const groups = new globalThis.Map<number, MapPoint[]>();
   for (const point of points) {
@@ -37,7 +35,7 @@ function groupByDay(points: MapPoint[]): globalThis.Map<number, MapPoint[]> {
   return groups;
 }
 
-const MapDisplay: React.FC<MapDisplayProps> = ({ points, center, city }) => {
+const MapDisplay: React.FC<MapDisplayProps> = ({ points, center }) => {
   const [mapCenter, setMapCenter] = useState<[number, number]>([55.751244, 37.618423]);
   const mapRef = useRef<any>(null);
 
@@ -64,10 +62,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ points, center, city }) => {
   }, []);
 
   const byDay = groupByDay(points);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  void city; // city prop kept for external use / future display
 
-  // Days with more than one point get a polyline
   const polylines: Array<{ day: number; coords: [number, number][]; color: string }> = [];
   byDay.forEach((dayPoints, day) => {
     if (dayPoints.length >= 2) {
@@ -99,8 +94,6 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ points, center, city }) => {
           height="400px"
           modules={['geoObject.addon.balloon', 'geoObject.addon.hint']}
         >
-
-          {/* Polylines per day */}
           {polylines.map(({ day, coords, color }) => (
             <Polyline
               key={`line-day-${day}`}
@@ -114,11 +107,9 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ points, center, city }) => {
             />
           ))}
 
-          {/* Placemarks */}
           {points.map((point, index) => {
             const day = (point as { day?: number }).day ?? (point as { day_number?: number }).day_number;
             const color = colorForDay(day);
-            // Order within the day for the label
             const dayGroup = day ? byDay.get(day) ?? [] : [];
             const orderInDay = dayGroup.indexOf(point);
             const label = day ? `${day}-${orderInDay + 1}` : String(index + 1);
@@ -147,7 +138,6 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ points, center, city }) => {
         </YMap>
       </YMaps>
 
-      {/* Day legend — only shown when there are multiple days */}
       {byDay.size > 1 && (
         <div className="map-legend">
           {Array.from(byDay.entries())
