@@ -61,8 +61,11 @@ def _to_response(message: models.ChatMessage) -> ApiChatMessageResponse:
 def _get_user_preferences_text(user: models.User) -> str:
     if user.preferences is None or not user.preferences.interests:
         return ""
-    values = [value.strip() for value in user.preferences.interests.split(",")]
-    clean_values = [value for value in values if value]
+    clean_values = [
+        value.strip()
+        for value in user.preferences.interests.split(",")
+        if value.strip() and not value.strip().isdigit()
+    ]
     return ", ".join(clean_values)
 
 

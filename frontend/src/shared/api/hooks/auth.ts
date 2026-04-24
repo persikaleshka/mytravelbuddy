@@ -11,7 +11,6 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: (data: LoginRequest) => login(data),
     onSuccess: (data) => {
-      // Use auth context to update authentication state
       authLogin(data.token, {
         id: data.user.id,
         email: data.user.email,
@@ -31,7 +30,6 @@ export const useRegister = () => {
   return useMutation({
     mutationFn: (data: RegisterRequest) => register(data),
     onSuccess: (data) => {
-      // Use auth context to update authentication state
       authLogin(data.token, {
         id: data.user.id,
         email: data.user.email,

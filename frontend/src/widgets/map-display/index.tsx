@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { YMaps, Map as YMap, Placemark, Polyline } from '@pbe/react-yandex-maps';
+import { useTranslation } from 'react-i18next';
 import type { MapPoint } from '@/shared/api/types/map';
 import './MapDisplay.css';
 
@@ -36,7 +37,8 @@ function groupByDay(points: MapPoint[]): globalThis.Map<number, MapPoint[]> {
 }
 
 const MapDisplay: React.FC<MapDisplayProps> = ({ points, center }) => {
-  const [mapCenter, setMapCenter] = useState<[number, number]>([55.751244, 37.618423]);
+  const { t } = useTranslation();
+  const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
   const mapRef = useRef<any>(null);
 
   useEffect(() => {
@@ -74,11 +76,11 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ points, center }) => {
     }
   });
 
-  if (!points || points.length === 0) {
+  if (!points || points.length === 0 || !mapCenter) {
     return (
       <div className="map-display">
         <div className="map-placeholder">
-          <p>Спросите ассистента — он предложит места на карте</p>
+          <p>{t('map.placeholder')}</p>
         </div>
       </div>
     );
@@ -149,7 +151,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ points, center }) => {
                   className="map-legend-dot"
                   style={{ backgroundColor: colorForDay(day) }}
                 />
-                День {day} ({dayPoints.length})
+                {t('map.legendDay', { day, count: dayPoints.length })}
               </span>
             ))}
         </div>

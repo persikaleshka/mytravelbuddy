@@ -1,14 +1,18 @@
 import axios from 'axios';
 
-
 export const apiClient = axios.create({
-  baseURL: '/api', 
+  baseURL: '/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+let _onUnauthorized: (() => void) | null = null;
+
+export const setUnauthorizedHandler = (handler: () => void) => {
+  _onUnauthorized = handler;
+};
 
 apiClient.interceptors.request.use(
   (config) => {
@@ -18,19 +22,15 @@ apiClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
-
 
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      
       localStorage.removeItem('token');
-      
+      _onUnauthorized?.();
     }
     return Promise.reject(error);
   },

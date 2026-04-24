@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useRoute, useDeleteRoute, useRoutePage, useRouteMapData } from '@/shared/api/hooks/routes';
 import { useRouteMessages, useSendRouteMessage } from '@/shared/api/hooks/chat';
 import WeatherDisplay from '@/widgets/weather-display';
@@ -7,15 +8,6 @@ import MapDisplay from '@/widgets/map-display';
 import type { MapPoint } from '@/shared/api/types/map';
 import './TripChat.css';
 
-function buildDisplayPoints(
-  mapData: { points: MapPoint[]; chat_suggestions: MapPoint[] } | undefined,
-): MapPoint[] {
-  const routePoints = mapData?.points ?? [];
-  const aiPoints = mapData?.chat_suggestions ?? [];
-  const routeIds = new Set(routePoints.map(p => p.location_id));
-  const uniqueAi = aiPoints.filter(p => !routeIds.has(p.location_id));
-  return [...routePoints, ...uniqueAi];
-}
 
 const DAY_COLORS = ['#e05c5c', '#4a90d9', '#5cb85c', '#f0a500', '#9b59b6', '#17a2b8', '#e67e22', '#2ecc71'];
 const colorForDay = (d: number) => d > 0 ? DAY_COLORS[(d - 1) % DAY_COLORS.length] : '#667b68';
@@ -23,20 +15,32 @@ const colorForDay = (d: number) => d > 0 ? DAY_COLORS[(d - 1) % DAY_COLORS.lengt
 const TripChatPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { t } = useTranslation();
+  const isNewTrip = (location.state as { isNew?: boolean } | null)?.isNew === true;
 
   const { data: route, isLoading: isRouteLoading, isError: isRouteError, error: routeError } = useRoute(id || '');
   const { mutate: deleteRoute } = useDeleteRoute();
-  const { data: routePage, isLoading: isRoutePageLoading } = useRoutePage(id || '');
-  const { data: mapData } = useRouteMapData(id || '');
   const { data: messages = [], isLoading: isMessagesLoading } = useRouteMessages(id || '');
+
+  const hasMessages = messages.length > 0;
+  const shouldFetchDetails = !isNewTrip || hasMessages;
+
+  const { data: routePage, isLoading: isRoutePageLoading } = useRoutePage(
+    shouldFetchDetails ? (id || '') : ''
+  );
+  const { data: mapData, isLoading: isMapLoading } = useRouteMapData(
+    shouldFetchDetails ? (id || '') : ''
+  );
   const { mutate: sendMessage, isPending: isSending, isError: isSendError, error: sendError } = useSendRouteMessage(id || '');
 
   const [newMessage, setNewMessage] = useState('');
   const lastMessageTextRef = useRef('');
   const hasScrolledToBottom = useRef(false);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    const el = document.querySelector('.messages-container');
+    const el = messagesContainerRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   };
 
@@ -49,7 +53,7 @@ const TripChatPage: React.FC = () => {
 
   useEffect(() => {
     if (!hasScrolledToBottom.current) return;
-    const el = document.querySelector('.messages-container');
+    const el = messagesContainerRef.current;
     if (!el) return;
     const { scrollTop, scrollHeight, clientHeight } = el;
     if (scrollTop + clientHeight >= scrollHeight - 100) scrollToBottom();
@@ -85,32 +89,43 @@ const TripChatPage: React.FC = () => {
   const handleBack = () => navigate('/dashboard');
 
   const handleDeleteTrip = () => {
-    if (id && route && window.confirm(`Are you sure you want to delete trip "${route.name}"?`)) {
+    if (id && route && window.confirm(t('tripChat.deleteTripConfirm', { name: route.name }))) {
       deleteRoute(id, {
         onSuccess: () => navigate('/dashboard'),
         onError: (error) => {
           console.error('Failed to delete trip:', error);
-          alert('Failed to delete trip. Please try again.');
+          alert(t('tripChat.deleteFailed'));
         },
       });
     }
   };
 
-  const isLoading = isRouteLoading || isMessagesLoading || isRoutePageLoading;
+  const routeReady     = !!route     && route.id            === id;
+  const routePageReady = !!routePage && routePage.route?.id === id;
+  const mapDataReady   = !!mapData   && mapData.routeId     === id;
+
+  const isLoading =
+    isRouteLoading || isMessagesLoading || isRoutePageLoading || isMapLoading ||
+    !routeReady;
+
+  const formatDate = (d?: string) => d ? new Date(d).toLocaleDateString() : '';
+  const routeDateRange = route
+    ? `${route.city} • ${formatDate(route.start_date)} — ${formatDate(route.end_date)}`
+    : '';
 
   if (isLoading) {
     return (
       <div className="trip-chat-page">
         <div className="trip-header">
-          <button onClick={handleBack} className="back-button">← Back to Trips</button>
+          <button onClick={handleBack} className="back-button">{t('tripChat.backToTrips')}</button>
           <div className="trip-info-header">
             <h1>{route?.name || 'Trip'}</h1>
-            <p>{route?.city} • {route?.start_date} to {route?.end_date}</p>
+            <p>{routeDateRange}</p>
           </div>
         </div>
         <div className="main-content">
           <div className="trip-sidebar">
-            <div className="loading">Loading trip details...</div>
+            <div className="loading">{t('tripChat.loading')}</div>
           </div>
         </div>
       </div>
@@ -121,26 +136,33 @@ const TripChatPage: React.FC = () => {
     return (
       <div className="trip-chat-page">
         <div className="trip-header">
-          <button onClick={handleBack} className="back-button">← Back to Trips</button>
+          <button onClick={handleBack} className="back-button">{t('tripChat.backToTrips')}</button>
           <div className="trip-info-header">
             <h1>{route?.name || 'Trip'}</h1>
-            <p>{route?.city} • {route?.start_date} to {route?.end_date}</p>
+            <p>{routeDateRange}</p>
           </div>
         </div>
         <div className="main-content">
           <div className="trip-sidebar">
-            <div className="error">Error loading trip: {routeError?.message || 'Unknown error'}</div>
+            <div className="error">{t('tripChat.errorLoading', { message: routeError?.message || t('tripChat.errorDefault') })}</div>
           </div>
         </div>
       </div>
     );
   }
 
-  const allPoints = buildDisplayPoints(mapData);
+  const safeMapData   = mapDataReady   ? mapData   : undefined;
+  const safeRoutePage = routePageReady ? routePage : undefined;
 
   type DisplayPoint = MapPoint & { day?: number; day_number?: number; reason?: string };
-  const routePoints: DisplayPoint[] = routePage?.route_points ?? [];
-  const displayPoints: DisplayPoint[] = routePoints.length > 0 ? routePoints : allPoints;
+
+  const confirmedPoints: DisplayPoint[] = safeRoutePage?.route_points ?? [];
+  const aiSuggestions: DisplayPoint[] = safeMapData?.chat_suggestions ?? [];
+  const displayPoints: DisplayPoint[] = [
+    ...confirmedPoints,
+    ...aiSuggestions.filter(p => !confirmedPoints.some(r => r.location_id === p.location_id)),
+  ];
+  const allMapPoints: MapPoint[] = displayPoints;
 
   const grouped = new Map<number, DisplayPoint[]>();
   for (const point of displayPoints) {
@@ -154,20 +176,24 @@ const TripChatPage: React.FC = () => {
   return (
     <div className="trip-chat-page">
       <div className="trip-header">
-        <button onClick={handleBack} className="back-button">← Back to Trips</button>
+          <button onClick={handleBack} className="back-button">{t('tripChat.backToTrips')}</button>
         <div className="trip-info-header">
           <h1>{route?.name || 'Trip'}</h1>
-          <p>{route?.city} • {route?.start_date} to {route?.end_date}</p>
+          <p>
+            {route?.city}
+            {route?.start_date ? ` • ${new Date(route.start_date).toLocaleDateString()}` : ''}
+            {route?.end_date ? ` — ${new Date(route.end_date).toLocaleDateString()}` : ''}
+          </p>
         </div>
-        <button onClick={handleDeleteTrip} className="delete-button">Delete Trip</button>
+        <button onClick={handleDeleteTrip} className="delete-button">{t('tripChat.deleteTrip')}</button>
       </div>
 
       <div className="main-content">
         <div className="trip-sidebar">
           <div className="chat-container">
-            <div className="chat-header">Чат с ассистентом</div>
+            <div className="chat-header">{t('tripChat.chat')}</div>
 
-            <div className="messages-container">
+            <div className="messages-container" ref={messagesContainerRef}>
               {messages.map((message) => (
                 <div key={message.id} className={`message ${message.sender}`}>
                   <div className="message-content">
@@ -186,23 +212,23 @@ const TripChatPage: React.FC = () => {
               <div className="error-message">
                 {sendError?.message.includes('429') ? (
                   <>
-                    <p>Слишком много запросов. Подождите немного и попробуйте снова.</p>
+                    <p>{t('tripChat.errorTooManyRequests')}</p>
                     <button onClick={() => doSend(lastMessageTextRef.current)} className="retry-button" disabled={isSending}>
-                      Повторить
+                      {t('tripChat.retry')}
                     </button>
                   </>
                 ) : sendError?.message.toLowerCase().includes('timeout') || sendError?.message.toLowerCase().includes('network') ? (
                   <>
-                    <p>Не удалось отправить сообщение. Проверьте соединение и попробуйте снова.</p>
+                    <p>{t('tripChat.errorNetwork')}</p>
                     <button onClick={() => doSend(lastMessageTextRef.current)} className="retry-button" disabled={isSending}>
-                      Повторить
+                      {t('tripChat.retry')}
                     </button>
                   </>
                 ) : (
                   <>
-                    <p>Ошибка отправки сообщения. Попробуйте ещё раз.</p>
+                    <p>{t('tripChat.errorSend')}</p>
                     <button onClick={() => doSend(lastMessageTextRef.current)} className="retry-button" disabled={isSending}>
-                      Повторить
+                      {t('tripChat.retry')}
                     </button>
                   </>
                 )}
@@ -214,7 +240,7 @@ const TripChatPage: React.FC = () => {
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Спросите ассистента о маршруте..."
+                placeholder={t('tripChat.inputPlaceholder')}
                 className="message-input"
                 disabled={isSending}
               />
@@ -223,7 +249,7 @@ const TripChatPage: React.FC = () => {
                 className={`send-button${isSending ? ' send-button--loading' : ''}`}
                 disabled={isSending || !newMessage.trim()}
               >
-                {isSending ? 'Отправка...' : 'Отправить'}
+                {isSending ? t('tripChat.sending') : t('tripChat.send')}
               </button>
             </form>
           </div>
@@ -231,22 +257,22 @@ const TripChatPage: React.FC = () => {
 
         <div className="trip-content">
           <div className="trip-content-inner">
-            <h2>Trip Details</h2>
+            <h2>{t('tripChat.tripDetails')}</h2>
 
             <div className="map-section">
               <MapDisplay
-                points={allPoints}
-                center={mapData?.center ?? null}
-                city={mapData?.city ?? route?.city ?? ''}
+                points={allMapPoints}
+                center={safeMapData?.center ?? null}
+                city={safeMapData?.city ?? route?.city ?? ''}
               />
             </div>
 
             <div className="route-points-section">
-              <h3>Места маршрута</h3>
+              <h3>{t('tripChat.routePoints')}</h3>
 
               {displayPoints.length === 0 ? (
                 <p className="route-points-empty">
-                  Спросите ассистента — он предложит места и они появятся здесь
+                  {t('tripChat.routePointsEmpty')}
                 </p>
               ) : (
                 <div className="route-points-list">
@@ -254,7 +280,7 @@ const TripChatPage: React.FC = () => {
                     <div key={day} className="route-day-group">
                       {hasMultipleDays && (
                         <div className="route-day-header" style={{ borderLeftColor: colorForDay(day) }}>
-                          {day > 0 ? `День ${day}` : 'Предложения'}
+                          {day > 0 ? t('tripChat.dayLabel', { day }) : t('tripChat.suggestions')}
                         </div>
                       )}
                       {grouped.get(day)!.map((point, i) => (
@@ -272,13 +298,12 @@ const TripChatPage: React.FC = () => {
                           <button
                             className="show-on-map-button"
                             onClick={() => {
-                              const target = allPoints.find(p => p.location_id === point.location_id) ?? point;
                               window.dispatchEvent(new CustomEvent('showPointOnMap', {
-                                detail: { latitude: target.latitude, longitude: target.longitude },
+                                detail: { latitude: point.latitude, longitude: point.longitude },
                               }));
                             }}
                           >
-                            На карте
+                            {t('tripChat.showOnMap')}
                           </button>
                         </div>
                       ))}
@@ -289,11 +314,11 @@ const TripChatPage: React.FC = () => {
             </div>
 
             <div className="weather-section">
-              {routePage ? (
-                <WeatherDisplay weatherData={routePage.weather.data} />
+              {safeRoutePage ? (
+                <WeatherDisplay weatherData={safeRoutePage.weather.data} />
               ) : (
                 <div className="weather-placeholder">
-                  <p>Loading weather data...</p>
+                  <p>{t('tripChat.weatherLoading')}</p>
                 </div>
               )}
             </div>

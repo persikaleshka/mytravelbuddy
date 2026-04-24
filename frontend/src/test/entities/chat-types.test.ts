@@ -6,8 +6,6 @@ import type {
   ChatSendResponse,
 } from '@/entities/chat/types';
 
-// Type-level tests: verify the shapes match APICONTRACT.md
-
 describe('ChatMessage type', () => {
   it('has all required fields from APICONTRACT', () => {
     expectTypeOf<ChatMessage>().toHaveProperty('id');
@@ -41,7 +39,7 @@ describe('ChatMapPoint type', () => {
 
 describe('AssistantStructured type', () => {
   it('all fields are optional', () => {
-    expectTypeOf<AssistantStructured['summary']>().toEqualTypeOf<string | undefined>();
+    expectTypeOf<AssistantStructured['summary']>().toEqualTypeOf<string | string[] | undefined>();
     expectTypeOf<AssistantStructured['plan']>().toEqualTypeOf<string[] | undefined>();
     expectTypeOf<AssistantStructured['questions']>().toEqualTypeOf<string[] | undefined>();
   });

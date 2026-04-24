@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useRegister } from '@/shared/api/hooks/auth';
 import type { AxiosError } from 'axios';
 import type { ErrorResponse } from '@/shared/api/types/auth';
-import '../login/Login.css';
+import './Register.css';
 
 const RegisterPage: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { mutate: register, isPending, isError } = useRegister();
   const [registerError, setRegisterError] = useState('');
 
@@ -22,8 +24,8 @@ const RegisterPage: React.FC = () => {
       },
       onError: (err: unknown) => {
         const error = err as AxiosError<ErrorResponse>;
-        setRegisterError(error?.response?.data?.message || 'Failed to register. Please try again.');
-      }
+        setRegisterError(error?.response?.data?.message || t('register.errorDefault'));
+      },
     });
   };
 
@@ -34,18 +36,18 @@ const RegisterPage: React.FC = () => {
           <div className="login-split-left">
             <div className="login-brand">
               <h1>MyTravelBuddy</h1>
-              <p className="brand-slogan">Plan your perfect journey with AI</p>
+              <p className="brand-slogan">{t('register.brandSlogan')}</p>
             </div>
-            
+
             <div className="login-form-container">
               <div className="login-form-header">
-                <h2>Create an account</h2>
-                <p>Join thousands of travelers planning perfect trips</p>
+                <h2>{t('register.title')}</h2>
+                <p>{t('register.subtitle')}</p>
               </div>
-              
+
               <form onSubmit={handleSubmit} className="login-form">
                 <div className="form-group">
-                  <label htmlFor="name">Full Name</label>
+                  <label htmlFor="name">{t('register.name')}</label>
                   <input
                     type="text"
                     id="name"
@@ -54,9 +56,9 @@ const RegisterPage: React.FC = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="form-group">
-                  <label htmlFor="email">Email</label>
+                  <label htmlFor="email">{t('register.email')}</label>
                   <input
                     type="email"
                     id="email"
@@ -64,12 +66,12 @@ const RegisterPage: React.FC = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     className={isError ? 'error' : ''}
-                    aria-describedby={isError ? "email-error" : undefined}
+                    aria-describedby={isError ? 'email-error' : undefined}
                   />
                 </div>
-                
+
                 <div className="form-group">
-                  <label htmlFor="password">Password</label>
+                  <label htmlFor="password">{t('register.password')}</label>
                   <input
                     type="password"
                     id="password"
@@ -77,38 +79,38 @@ const RegisterPage: React.FC = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     className={isError ? 'error' : ''}
-                    aria-describedby={isError ? "password-error" : undefined}
+                    aria-describedby={isError ? 'password-error' : undefined}
                   />
                 </div>
-                
-                <button 
-                  type="submit" 
+
+                <button
+                  type="submit"
                   className="btn btn-primary btn-large btn-full-width"
                   disabled={isPending}
                 >
-                  {isPending ? 'Creating account...' : 'Create account'}
+                  {isPending ? t('register.submitting') : t('register.submit')}
                 </button>
-                
+
                 {isError && registerError && (
                   <div className="error-message" id="register-error" role="alert">
                     {registerError}
                   </div>
                 )}
               </form>
-              
+
               <div className="login-footer">
                 <p>
-                  Already have an account? <a href="/login">Sign in</a>
+                  {t('register.hasAccount')} <Link to="/login">{t('register.signIn')}</Link>
                 </p>
               </div>
             </div>
           </div>
-          
+
           <div className="login-split-right">
             <div className="login-visual">
               <div className="visual-content">
-                <h2>Start planning your dream trip</h2>
-                <p>Join thousands of travelers who use MyTravelBuddy to create perfect itineraries</p>
+                <h2>{t('register.visualTitle')}</h2>
+                <p>{t('register.visualSubtitle')}</p>
               </div>
             </div>
           </div>

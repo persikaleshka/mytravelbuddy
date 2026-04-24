@@ -34,6 +34,8 @@ def extract_map_points_from_text(
 ) -> list[dict]:
     if not city:
         return []
+    if not structured_places:
+        return []
 
     city = _normalize_city(city)
     city_locations = _load_city_locations(db, city)
@@ -41,60 +43,31 @@ def extract_map_points_from_text(
     selected: list[models.Location] = []
     metadata: dict[int, dict[str, Any]] = {}
 
-    if structured_places:
-        for place in structured_places[:limit]:
-            if not isinstance(place, dict):
-                continue
-            name = (place.get("name") or "").strip()
-            if not name:
-                continue
+    for place in structured_places[:limit]:
+        if not isinstance(place, dict):
+            continue
+        name = (place.get("name") or "").strip()
+        if not name:
+            continue
 
-            loc = _match_location_by_name(city_locations, name)
-            if loc is None:
-                loc = _resolve_and_cache(
-                    db=db,
-                    city=city,
-                    place=place,
-                    city_locations=city_locations,
-                )
+        loc = _match_location_by_name(city_locations, name)
+        if loc is None:
+            loc = _resolve_and_cache(
+                db=db,
+                city=city,
+                place=place,
+                city_locations=city_locations,
+            )
 
-            if loc is not None and loc not in selected:
-                selected.append(loc)
-                metadata[loc.id] = {
-                    "day": place.get("day"),
-                    "reason": place.get("reason"),
-                }
+        if loc is not None and loc not in selected:
+            selected.append(loc)
+            metadata[loc.id] = {
+                "day": place.get("day"),
+                "reason": place.get("reason"),
+            }
 
-            if len(selected) >= limit:
-                break
-
-    if len(selected) < limit:
-        normalized_text = _normalize(assistant_text)
-        city_locations = _load_city_locations(db, city)
-        for loc in city_locations:
-            if loc in selected:
-                continue
-            if _normalize(loc.name) in normalized_text:
-                selected.append(loc)
-                if len(selected) >= limit:
-                    break
-
-    if len(selected) < 3:
-        normalized_text = _normalize(assistant_text)
-        preferred = _guess_categories(normalized_text)
-        if preferred:
-            city_locations = _load_city_locations(db, city)
-            for loc in city_locations:
-                if loc in selected:
-                    continue
-                if loc.category.lower() in preferred:
-                    selected.append(loc)
-                    if len(selected) >= limit:
-                        break
-
-    if not selected:
-        city_locations = _load_city_locations(db, city)
-        selected = list(city_locations[: min(limit, 5)])
+        if len(selected) >= limit:
+            break
 
     output: list[dict] = []
     seen_ids: set[int] = set()
@@ -156,6 +129,13 @@ def _resolve_and_cache(
 
     category = (place.get("category") or "other").strip().lower() or "other"
 
+    existing = next(
+        (loc for loc in city_locations if loc.name.lower() == name.lower()),
+        None,
+    )
+    if existing:
+        return existing
+
     try:
         loc = models.Location(
             name=name,
@@ -200,19 +180,6 @@ def _is_coord(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
-def _guess_categories(normalized_text: str) -> set[str]:
-    categories: set[str] = set()
-    if any(t in normalized_text for t in ("музей", "museum", "галере", "выставк")):
-        categories.add("museum")
-    if any(t in normalized_text for t in ("кафе", "еда", "ресторан", "cafe", "food", "coffee", "кофе")):
-        categories.add("cafe")
-    if any(t in normalized_text for t in ("парк", "прогул", "сад", "walk", "park", "garden")):
-        categories.add("park")
-    if any(t in normalized_text for t in ("театр", "theater", "theatre", "спектакл")):
-        categories.add("theater")
-    return categories
-
-
 def _normalize(value: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[^a-zA-Zа-яА-Я0-9 ]", " ", (value or "").lower())).strip()
 
@@ -243,4 +210,4 @@ def _match_location_by_name(
             best_score = score
             best = loc
 
-    return best if best_score >= 0.62 else None
+    return best if best_score >= 0.75 else None

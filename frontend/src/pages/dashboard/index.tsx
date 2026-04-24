@@ -1,52 +1,40 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useUserRoutes } from '@/shared/api/hooks/routes';
 import './Dashboard.css';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { data: routes, isPending, isError, error } = useUserRoutes();
-
-  const handleCreateTrip = () => {
-    navigate('/create-trip');
-  };
-
-  const handleViewTrip = (id: string) => {
-    navigate(`/trip/${id}`);
-  };
 
   return (
     <div className="dashboard-page">
       <div className="dashboard-header">
-        <h1>My Trips</h1>
-        <button 
-          className="btn btn-primary" 
-          onClick={handleCreateTrip}
-        >
-          Create Trip
+        <h1>{t('dashboard.title')}</h1>
+        <button className="btn btn-primary" onClick={() => navigate('/create-trip')}>
+          {t('dashboard.createTrip')}
         </button>
       </div>
 
       {isPending && (
         <div className="loading-state">
-          <p>Loading your trips...</p>
+          <p>{t('dashboard.loading')}</p>
         </div>
       )}
 
       {isError && (
         <div className="error-state">
-          <p>Error loading trips: {error?.message || 'Unknown error'}</p>
+          <p>{t('dashboard.errorLoading', { message: error?.message || '' })}</p>
         </div>
       )}
 
       {routes && routes.length === 0 && (
         <div className="empty-state">
-          <p>You don't have any trips yet.</p>
-          <button 
-            className="btn btn-primary" 
-            onClick={handleCreateTrip}
-          >
-            Create your first trip
+          <p>{t('dashboard.empty')}</p>
+          <button className="btn btn-primary" onClick={() => navigate('/create-trip')}>
+            {t('dashboard.createFirst')}
           </button>
         </div>
       )}
@@ -54,16 +42,16 @@ const DashboardPage: React.FC = () => {
       {routes && routes.length > 0 && (
         <div className="routes-list">
           {routes.map((route) => (
-            <div 
-              key={route.id} 
+            <div
+              key={route.id}
               className="route-card"
-              onClick={() => handleViewTrip(route.id)}
+              onClick={() => navigate(`/trip/${route.id}`)}
             >
               <h3>{route.name}</h3>
-              <p>City: {route.city}</p>
+              <p>{t('dashboard.city', { city: route.city })}</p>
               <div className="route-meta">
-                <span>Start: {route.start_date}</span>
-                <span>End: {route.end_date}</span>
+                <span>{t('dashboard.dateStart', { date: new Date(route.start_date).toLocaleDateString() })}</span>
+                <span>{t('dashboard.dateEnd', { date: new Date(route.end_date).toLocaleDateString() })}</span>
               </div>
             </div>
           ))}

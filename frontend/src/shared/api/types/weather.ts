@@ -11,7 +11,7 @@ export interface WeatherResponse {
   source: string;
   message: string | null;
   data: WeatherData[];
-  coords: {
+  coords?: {
     latitude: number;
     longitude: number;
   };

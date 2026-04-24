@@ -11,7 +11,7 @@ describe('PlaceCard', () => {
 
   it('renders day when provided', () => {
     render(<PlaceCard name="Музей" day={2} onShowOnMap={vi.fn()} />);
-    expect(screen.getByText(/День: 2/)).toBeInTheDocument();
+    expect(screen.getByText('День: 2')).toBeInTheDocument();
   });
 
   it('does not render day label when day is undefined', () => {
@@ -21,7 +21,7 @@ describe('PlaceCard', () => {
 
   it('renders reason when provided', () => {
     render(<PlaceCard name="Музей" reason="Популярный музей" onShowOnMap={vi.fn()} />);
-    expect(screen.getByText(/Популярный музей/)).toBeInTheDocument();
+    expect(screen.getByText('Причина: Популярный музей')).toBeInTheDocument();
   });
 
   it('does not render reason label when reason is undefined', () => {
@@ -37,10 +37,17 @@ describe('PlaceCard', () => {
   });
 
   it('renders all fields together', () => {
-    render(<PlaceCard name="Красная площадь" day={1} reason="Главная достопримечательность" onShowOnMap={vi.fn()} />);
+    render(
+      <PlaceCard
+        name="Красная площадь"
+        day={1}
+        reason="Главная достопримечательность"
+        onShowOnMap={vi.fn()}
+      />,
+    );
     expect(screen.getByText('Красная площадь')).toBeInTheDocument();
-    expect(screen.getByText(/День: 1/)).toBeInTheDocument();
-    expect(screen.getByText(/Главная достопримечательность/)).toBeInTheDocument();
+    expect(screen.getByText('День: 1')).toBeInTheDocument();
+    expect(screen.getByText('Причина: Главная достопримечательность')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Показать на карте' })).toBeInTheDocument();
   });
 });

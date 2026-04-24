@@ -23,13 +23,17 @@ export interface ChatMapPoint {
 }
 
 export interface AssistantStructured {
-  summary?: string;
+  summary?: string | string[];
   plan?: string[];
   questions?: string[];
   places?: {
     name: string;
     day?: number;
     reason?: string;
+    latitude?: number;
+    longitude?: number;
+    location_id?: string;
+    category?: string;
   }[];
 }
 
