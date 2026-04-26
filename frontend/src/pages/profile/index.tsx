@@ -4,9 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/shared/contexts/auth-context';
 import './Profile.css';
 
+const LANG_LABELS: Record<string, string> = {
+  ru: 'Русский',
+  en: 'English',
+};
+
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
 
   const accountSettings = {
@@ -58,6 +63,10 @@ const ProfilePage: React.FC = () => {
             <div className="detail-item">
               <span className="detail-label">{t('profile.tripStyle')}</span>
               <span className="detail-value">{formatTripStyle(accountSettings.tripStyle)}</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">{t('account.language')}</span>
+              <span className="detail-value">{LANG_LABELS[i18n.language] ?? i18n.language}</span>
             </div>
           </div>
 

@@ -19,7 +19,7 @@ const AssistantStructured: React.FC<AssistantStructuredProps> = ({ structured, o
   const handleShowOnMap = (place: Record<string, unknown>) => {
     const latitude = place.latitude as number | undefined;
     const longitude = place.longitude as number | undefined;
-    if (!latitude || !longitude) return;
+    if (latitude == null || longitude == null) return;
     const point = {
       location_id: (place.location_id as string) || '',
       name: (place.name as string) || '',

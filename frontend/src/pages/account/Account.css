@@ -85,8 +85,8 @@
 .form-group textarea:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #e6b9a4; /* Color 1 for focus */
-  box-shadow: 0 0 0 2px rgba(230, 185, 164, 0.2);
+  border-color: #667b68;
+  box-shadow: 0 0 0 2px rgba(102, 123, 104, 0.2);
 }
 
 .form-group textarea::placeholder {
@@ -140,12 +140,50 @@
 }
 
 .btn-primary {
-  background: #e6b9a4; /* Color 1 for background */
-  color: #667b68; /* Color 5 for text */
-  border: 1px solid #e6b9a4; /* Color 1 for border */
+  background: #fceee9;
+  color: #667b68;
+  border: 1px solid #fceee9;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #d9a894; /* Darker shade of Color 1 */
-  border-color: #d9a894;
+  background: #f8d3c5;
+  border-color: #f8d3c5;
+}
+
+@media (max-width: 768px) {
+  .account-page {
+    padding: 1rem;
+  }
+
+  .account-card {
+    padding: 1.25rem;
+  }
+
+  .account-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .account-avatar {
+    margin-right: 0;
+    margin-bottom: 1rem;
+  }
+
+  .account-actions {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  .account-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .account-container h1 {
+    font-size: 1.5rem;
+  }
 }

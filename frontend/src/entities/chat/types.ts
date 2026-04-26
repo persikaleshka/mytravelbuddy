@@ -5,11 +5,13 @@ export interface ChatMessage {
   sender: 'user' | 'assistant';
   text: string;
   formattedText: string;
+  assistantStructured?: AssistantStructured;
   createdAt: string;
 }
 
 export interface CreateChatMessageRequest {
   text: string;
+  lang?: string;
 }
 
 export interface ChatMapPoint {

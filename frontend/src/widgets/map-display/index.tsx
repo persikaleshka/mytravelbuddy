@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useTranslation } from 'react-i18next';
@@ -80,7 +80,6 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ points, center }) => {
   const { t } = useTranslation();
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
   const [flyTo, setFlyTo] = useState<[number, number] | null>(null);
-  const initializedRef = useRef(false);
 
   useEffect(() => {
     if (center) {
@@ -123,14 +122,12 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ points, center }) => {
     );
   }
 
-  if (!initializedRef.current) initializedRef.current = true;
-
   return (
     <div className="map-display">
       <MapContainer
         center={mapCenter}
         zoom={12}
-        style={{ width: '100%', height: '400px' }}
+        style={{ width: '100%', height: 'clamp(200px, 40vw, 400px)' }}
         scrollWheelZoom
       >
         <TileLayer
@@ -164,7 +161,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ points, center }) => {
               <Popup>
                 <strong>{point.name}</strong>
                 {point.category && <><br />{point.category}</>}
-                {day && <><br />День: {day}</>}
+                {day && <><br />{t('tripChat.dayLabel', { day })}</>}
                 {(point as { reason?: string }).reason && (
                   <><br />{(point as { reason?: string }).reason}</>
                 )}

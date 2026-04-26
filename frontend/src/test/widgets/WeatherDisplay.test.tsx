@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import WeatherDisplay from '@/widgets/weather-display';
-import type { WeatherPoint } from '@/shared/api/types/weather';
+import type { WeatherData } from '@/shared/api/types/weather';
 
-const mockDay = (overrides: Partial<WeatherPoint> = {}): WeatherPoint => ({
+const mockDay = (overrides: Partial<WeatherData> = {}): WeatherData => ({
   date: '2024-07-01',
   temp_max: 25,
   temp_min: 15,

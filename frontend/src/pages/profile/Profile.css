@@ -111,6 +111,52 @@
 }
 
 .btn-primary:hover {
-  background-color: #f8d3c5; /* Color 1 for hover state */
-  color: #fceee9; /* Color 5 for text */
+  background-color: #f8d3c5;
+  color: #667b68;
+}
+
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 1rem;
+  }
+
+  .profile-card {
+    padding: 1.25rem;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .profile-avatar {
+    margin-right: 0;
+    margin-bottom: 1rem;
+  }
+
+  .detail-item {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .detail-label {
+    width: auto;
+  }
+
+  .profile-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .profile-actions .btn {
+    width: 100%;
+    margin-right: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .account-details {
+    padding: 1rem;
+  }
 }

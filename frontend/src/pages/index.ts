@@ -6,3 +6,5 @@ export { default as CreateTripPage } from './create-trip';
 export { default as ProfilePage } from './profile';
 export { default as AccountPage } from './account';
 export { default as TripChatPage } from './trip-chat';
+export { default as TripConfirmationPage } from './trip-confirmation';
+export { default as NotFoundPage } from './not-found';

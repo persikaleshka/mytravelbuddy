@@ -1,9 +1,9 @@
 .header {
-  background: #667b68; /* Color 5 for header background */
+  background: #667b68;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 1000;
 }
 
 .header-container {
@@ -22,21 +22,6 @@
   text-decoration: none;
 }
 
-.header-nav {
-  display: flex;
-  gap: 2rem;
-}
-
-.header-nav a {
-  color: #fceee9; /* Color 2 for text */
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s ease;
-}
-
-.header-nav a:hover {
-  color: #f8d3c5; /* Color 1 for hover */
-}
 
 .header-actions {
   display: flex;
@@ -94,10 +79,6 @@
 @media (max-width: 768px) {
   .header-container {
     padding: 0.5rem 1rem;
-  }
-  
-  .header-nav {
-    display: none;
   }
   
   .header-actions {

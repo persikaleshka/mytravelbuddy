@@ -1,5 +1,6 @@
 .map-display {
   margin: 20px 0;
+  isolation: isolate;
 }
 
 .map-legend {
@@ -25,13 +26,23 @@
 }
 
 .map-placeholder {
-  height: 400px;
+  height: clamp(200px, 40vw, 400px);
   display: flex;
   align-items: center;
   justify-content: center;
   background: #f8f9fa;
   border-radius: 8px;
   border: 1px dashed #dee2e6;
+}
+
+@media (max-width: 768px) {
+  .map-legend {
+    gap: 6px;
+  }
+
+  .map-legend-item {
+    font-size: 12px;
+  }
 }
 
 .map-placeholder p {

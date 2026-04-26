@@ -15,7 +15,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ name, day, reason, onShowOnMap })
     <div className="place-card">
       <h3 className="place-name">{name}</h3>
       {day && <p className="place-day">{t('placeCard.day', { day })}</p>}
-      {reason && <p className="place-reason">{t('placeCard.reason', { reason })}</p>}
+      {reason && <p className="place-reason">{reason}</p>}
       <button className="show-on-map-button" onClick={onShowOnMap}>
         {t('placeCard.showOnMap')}
       </button>

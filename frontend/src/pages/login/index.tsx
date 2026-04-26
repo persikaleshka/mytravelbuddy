@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLogin } from '@/shared/api/hooks/auth';
+import LangToggle from '@/shared/components/LangToggle';
 import type { AxiosError } from 'axios';
 import type { ErrorResponse } from '@/shared/api/types/auth';
 import './Login.css';
@@ -19,9 +20,7 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setLoginError('');
     login({ email, password }, {
-      onSuccess: () => {
-        navigate('/dashboard');
-      },
+      onSuccess: () => navigate('/dashboard'),
       onError: (err: unknown) => {
         const error = err as AxiosError<ErrorResponse>;
         setLoginError(error?.response?.data?.message || t('login.errorDefault'));
@@ -103,6 +102,7 @@ const LoginPage: React.FC = () => {
                 <p>
                   {t('login.noAccount')} <Link to="/register">{t('login.signUp')}</Link>
                 </p>
+                <LangToggle />
               </div>
             </div>
           </div>

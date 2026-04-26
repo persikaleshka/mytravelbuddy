@@ -21,7 +21,7 @@ describe('PlaceCard', () => {
 
   it('renders reason when provided', () => {
     render(<PlaceCard name="Музей" reason="Популярный музей" onShowOnMap={vi.fn()} />);
-    expect(screen.getByText('Причина: Популярный музей')).toBeInTheDocument();
+    expect(screen.getByText('Популярный музей')).toBeInTheDocument();
   });
 
   it('does not render reason label when reason is undefined', () => {
@@ -47,7 +47,7 @@ describe('PlaceCard', () => {
     );
     expect(screen.getByText('Красная площадь')).toBeInTheDocument();
     expect(screen.getByText('День: 1')).toBeInTheDocument();
-    expect(screen.getByText('Причина: Главная достопримечательность')).toBeInTheDocument();
+    expect(screen.getByText('Главная достопримечательность')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Показать на карте' })).toBeInTheDocument();
   });
 });
