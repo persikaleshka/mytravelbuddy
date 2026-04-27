@@ -28,10 +28,10 @@ const TripChatPage: React.FC = () => {
   const hasMessages = messages.length > 0;
   const shouldFetchDetails = !isNewTrip || hasMessages;
 
-  const { data: routePage, isLoading: isRoutePageLoading } = useRoutePage(
+  const { data: routePage } = useRoutePage(
     shouldFetchDetails ? (id || '') : ''
   );
-  const { data: mapData, isLoading: isMapLoading } = useRouteMapData(
+  const { data: mapData } = useRouteMapData(
     shouldFetchDetails ? (id || '') : ''
   );
   const { mutate: sendMessage, isPending: isSending, isError: isSendError, error: sendError } = useSendRouteMessage(id || '');
@@ -106,9 +106,7 @@ const TripChatPage: React.FC = () => {
   const routePageReady = !!routePage && routePage.route?.id === id;
   const mapDataReady   = !!mapData   && mapData.routeId     === id;
 
-  const isLoading =
-    isRouteLoading || isMessagesLoading || isRoutePageLoading || isMapLoading ||
-    !routeReady;
+  const isLoading = isRouteLoading || isMessagesLoading || !routeReady;
 
   const formatDate = (d?: string) => d ? new Date(d).toLocaleDateString() : '';
   const routeDateRange = route
@@ -200,18 +198,23 @@ const TripChatPage: React.FC = () => {
                 <div key={message.id} className={`message ${message.sender}`}>
                   <div className="message-content">
                     <div className={`message-text${message.sender === 'assistant' ? ' message-text--formatted' : ''}`}>
-                      {message.sender === 'assistant' && message.assistantStructured
-                        ? <AssistantStructured
-                            structured={message.assistantStructured}
-                            onShowOnMap={(point: ChatMapPoint) => {
-                              window.dispatchEvent(new CustomEvent('showPointOnMap', {
-                                detail: { latitude: point.latitude, longitude: point.longitude },
-                              }));
-                            }}
-                          />
-                        : message.sender === 'assistant'
-                          ? <span style={{ whiteSpace: 'pre-wrap' }}>{message.formattedText || message.text}</span>
-                          : message.text}
+                      {message.sender === 'assistant'
+                        ? <>
+                            {message.assistantStructured && Object.keys(message.assistantStructured).length > 0 && (
+                              <AssistantStructured
+                                structured={message.assistantStructured}
+                                onShowOnMap={(point: ChatMapPoint) => {
+                                  window.dispatchEvent(new CustomEvent('showPointOnMap', {
+                                    detail: { latitude: point.latitude, longitude: point.longitude },
+                                  }));
+                                }}
+                              />
+                            )}
+                            {(!message.assistantStructured || Object.keys(message.assistantStructured).length === 0) && (
+                              <span style={{ whiteSpace: 'pre-wrap' }}>{message.formattedText || message.text}</span>
+                            )}
+                          </>
+                        : message.text}
                     </div>
                     <div className="message-time">
                       {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -221,18 +224,11 @@ const TripChatPage: React.FC = () => {
               ))}
             </div>
 
-            {isSendError && (
+            {isSendError && !sendError?.message.toLowerCase().includes('timeout') && !(sendError as unknown as { code?: string })?.code?.includes('ECONNABORTED') && (
               <div className="error-message">
                 {sendError?.message.includes('429') ? (
                   <>
                     <p>{t('tripChat.errorTooManyRequests')}</p>
-                    <button onClick={() => doSend(lastMessageTextRef.current)} className="retry-button" disabled={isSending}>
-                      {t('tripChat.retry')}
-                    </button>
-                  </>
-                ) : sendError?.message.toLowerCase().includes('timeout') || sendError?.message.toLowerCase().includes('network') ? (
-                  <>
-                    <p>{t('tripChat.errorNetwork')}</p>
                     <button onClick={() => doSend(lastMessageTextRef.current)} className="retry-button" disabled={isSending}>
                       {t('tripChat.retry')}
                     </button>
@@ -335,6 +331,20 @@ const TripChatPage: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {route?.start_date && route?.end_date && (
+              <div className="tickets-section">
+                <h3>{t('tripChat.tickets')}</h3>
+                <a
+                  href={`https://travel.yandex.ru/avia/c213--anywhere/?adult_seats=1&children_seats=0&infant_seats=0&klass=economy&oneway=2&return_date=${route.end_date}&when=${route.start_date}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tickets-link"
+                >
+                  {t('tripChat.ticketsLink')}
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -47,6 +47,14 @@ class AIStructuredResponse(BaseModel):
     @field_validator("summary", "plan", "questions", mode="before")
     @classmethod
     def clean_text_list(cls, value: Any) -> list[str]:
+        if isinstance(value, str):
+            value = value.strip()
+            if not value:
+                return []
+            parts = re.split(r'\n+', value)
+            if len(parts) == 1:
+                parts = re.split(r'(?<=[а-яёa-z\"\d])\s*[,;]\s*(?=[А-ЯЁA-Z\d])', value)
+            value = [p.strip() for p in parts if p.strip()]
         if not isinstance(value, list):
             return []
         out: list[str] = []
@@ -344,10 +352,11 @@ def _build_system_prompt(
         "]"
         "}\n"
         "Ограничения:\n"
-        "- summary: 1-3 коротких пункта\n"
-        "- plan: 3-7 пунктов, понятные и приятные для чтения\n"
-        "- questions: 0-2 пункта\n"
+        "- summary: массив из 1-3 коротких строк, КАЖДАЯ строка — отдельный элемент массива\n"
+        "- plan: массив из 3-7 строк, КАЖДЫЙ день — отдельный элемент массива, НЕ одна строка через запятую\n"
+        "- questions: массив из 0-2 строк\n"
         "- places: 3-8 мест, если есть достаточно контекста\n"
+        "- Все поля summary/plan/questions — СТРОГО массивы строк, НЕ одна строка\n"
         "- Если координаты не знаешь точно, верни latitude/longitude = null"
     )
 

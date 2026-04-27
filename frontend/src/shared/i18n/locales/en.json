@@ -73,6 +73,10 @@
     "budget": "Budget:",
     "tripStyle": "Trip Style:",
     "notSet": "Not set",
+    "stats": "Trip Statistics",
+    "totalTrips": "Total trips",
+    "totalDays": "Total days",
+    "topCities": "Top cities",
     "edit": "Edit",
     "logout": "Logout",
     "budget_low": "Low ($ – $500)",
@@ -129,7 +133,9 @@
     "errorSend": "Error sending message. Please try again.",
     "retry": "Retry",
     "weatherLoading": "Loading weather data...",
-    "mapPlaceholder": "Ask the assistant — it will suggest places on the map"
+    "mapPlaceholder": "Ask the assistant — it will suggest places on the map",
+    "tickets": "Tickets",
+    "ticketsLink": "Find tickets →"
   },
   "tripConfirmation": {
     "title": "Trip Created Successfully!",

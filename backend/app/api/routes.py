@@ -207,53 +207,49 @@ async def get_route_map_data(
         avg_lon = sum(point.longitude for point in route_points) / len(route_points)
         center = {"latitude": avg_lat, "longitude": avg_lon}
 
-    all_assistant_messages = (
+    last_assistant_message = (
         db.query(models.ChatMessage)
         .filter(
             models.ChatMessage.route_id == route.id,
             models.ChatMessage.user_id == current_user.id,
             models.ChatMessage.sender == "assistant",
+            models.ChatMessage.ai_payload.isnot(None),
         )
-        .order_by(models.ChatMessage.created_at.asc(), models.ChatMessage.id.asc())
-        .all()
+        .order_by(models.ChatMessage.created_at.desc(), models.ChatMessage.id.desc())
+        .first()
     )
 
-    by_location: dict[str, dict] = {}
-    for msg in all_assistant_messages:
-        if not msg.ai_payload:
-            continue
+    chat_suggestions: list[dict] = []
+    if last_assistant_message and last_assistant_message.ai_payload:
         try:
-            payload = json.loads(msg.ai_payload)
+            payload = json.loads(last_assistant_message.ai_payload)
+            places = payload.get("places") if isinstance(payload, dict) else None
+            if isinstance(places, list):
+                for place in places:
+                    if not isinstance(place, dict):
+                        continue
+                    name = (place.get("name") or "").strip()
+                    lat = place.get("latitude")
+                    lon = place.get("longitude")
+                    if not name or lat is None or lon is None:
+                        continue
+                    chat_suggestions.append({
+                        "location_id": str(place.get("location_id") or name),
+                        "name": name,
+                        "category": (place.get("category") or "other").strip(),
+                        "latitude": float(lat),
+                        "longitude": float(lon),
+                        "day": place.get("day") if isinstance(place.get("day"), int) else None,
+                        "reason": place.get("reason") if isinstance(place.get("reason"), str) else None,
+                    })
         except Exception:
-            continue
-        if not isinstance(payload, dict):
-            continue
-        places = payload.get("places")
-        if not isinstance(places, list):
-            continue
-        for place in places:
-            if not isinstance(place, dict):
-                continue
-            name = (place.get("name") or "").strip()
-            lat = place.get("latitude")
-            lon = place.get("longitude")
-            if not name or not lat or not lon:
-                continue
-            loc_id = place.get("location_id") or name
-            entry = {
-                "location_id": str(loc_id),
-                "name": name,
-                "category": (place.get("category") or "other").strip(),
-                "latitude": float(lat),
-                "longitude": float(lon),
-                "day": place.get("day") if isinstance(place.get("day"), int) else None,
-                "reason": place.get("reason") if isinstance(place.get("reason"), str) else None,
-            }
-            existing = by_location.get(str(loc_id))
-            if existing is None or (not existing.get("day") and entry.get("day")):
-                by_location[str(loc_id)] = entry
+            pass
 
-    chat_suggestions = list(by_location.values())
+    if center is None and chat_suggestions:
+        lats = [p["latitude"] for p in chat_suggestions if p.get("latitude")]
+        lons = [p["longitude"] for p in chat_suggestions if p.get("longitude")]
+        if lats and lons:
+            center = {"latitude": sum(lats) / len(lats), "longitude": sum(lons) / len(lons)}
 
     return {
         "status": "ok",
