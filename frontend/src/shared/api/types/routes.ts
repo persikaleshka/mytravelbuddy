@@ -21,7 +21,7 @@ export interface RoutePageResponse {
 }
 
 export interface RouteItem {
-  location_id: number;
+  location_id: string;
   day_number: number;
   order_in_day: number;
 }

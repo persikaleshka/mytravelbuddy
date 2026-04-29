@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useRegister } from '@/shared/api/hooks/auth';
+import LangToggle from '@/shared/components/LangToggle';
 import type { AxiosError } from 'axios';
 import type { ErrorResponse } from '@/shared/api/types/auth';
 import './Register.css';
@@ -102,6 +103,7 @@ const RegisterPage: React.FC = () => {
                 <p>
                   {t('register.hasAccount')} <Link to="/login">{t('register.signIn')}</Link>
                 </p>
+                <LangToggle />
               </div>
             </div>
           </div>

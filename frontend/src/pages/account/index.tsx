@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/shared/contexts/auth-context';
+import LangToggle from '@/shared/components/LangToggle';
 import './Account.css';
 
 const AccountPage: React.FC = () => {
@@ -73,6 +74,11 @@ const AccountPage: React.FC = () => {
                 <option value="medium">{t('account.budget_medium')}</option>
                 <option value="high">{t('account.budget_high')}</option>
               </select>
+            </div>
+
+            <div className="form-group">
+              <label>{t('account.language')}</label>
+              <LangToggle />
             </div>
 
             <div className="form-group">

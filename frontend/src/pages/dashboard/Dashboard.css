@@ -1,8 +1,8 @@
 .dashboard-page {
   padding: 2rem;
-  background-color: #dde6d5; /* Color 3 for body background */
+  background-color: #dde6d5;
   min-height: calc(100vh - 80px);
-  color: #667b68; /* Color 5 for text */
+  color: #667b68;
 }
 
 .dashboard-header {
@@ -79,5 +79,37 @@
   justify-content: space-between;
   margin-top: 1rem;
   font-size: 0.875rem;
-  color: #a3b899; /* Color 4 for meta text */
+  color: #a3b899;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .dashboard-page {
+    padding: 1rem;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .routes-list {
+    grid-template-columns: 1fr;
+  }
+
+  .route-card {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .route-meta {
+    flex-direction: column;
+  }
 }

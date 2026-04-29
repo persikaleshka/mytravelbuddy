@@ -17,24 +17,48 @@ export const useSendRouteMessage = (routeId: string) => {
 
   return useMutation<UpdatedChatSendResponse, Error, CreateChatMessageRequest>({
     mutationFn: (data: CreateChatMessageRequest) => sendRouteMessage(routeId, data),
+    onError: (error: unknown) => {
+      const isTimeout =
+        (error as { code?: string })?.code === 'ECONNABORTED' ||
+        (error as { message?: string })?.message?.toLowerCase().includes('timeout');
+      if (isTimeout) {
+        queryClient.invalidateQueries({ queryKey: [CHAT_QUERY_KEY, routeId] });
+      }
+    },
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: [CHAT_QUERY_KEY, routeId] });
+      queryClient.setQueryData<ChatMessage[]>(
+        [CHAT_QUERY_KEY, routeId],
+        (old) => [...(old ?? []), response.user_message, response.assistant_message],
+      );
 
-      if (response.map_points && response.map_points.length > 0) {
-        const mapKey = [ROUTES_QUERY_KEY, 'map', routeId];
-        const prev = queryClient.getQueryData<MapResponse>(mapKey);
-        const existingIds = new Set((prev?.chat_suggestions ?? []).map(p => p.location_id));
-        const newPoints = response.map_points.filter(p => !existingIds.has(p.location_id));
+      const mapKey = [ROUTES_QUERY_KEY, 'map', routeId];
+      const latestPoints = (response.map_points ?? []).map(p => ({
+        location_id: p.location_id,
+        name: p.name,
+        category: p.category || 'other',
+        latitude: p.latitude,
+        longitude: p.longitude,
+        day: p.day,
+        reason: p.reason,
+      }));
 
-        if (newPoints.length > 0) {
-          queryClient.setQueryData<MapResponse>(mapKey, old => {
-            if (!old) return old;
-            return {
-              ...old,
-              chat_suggestions: [...(old.chat_suggestions ?? []), ...newPoints],
-            };
-          });
-        }
+      if (latestPoints.length > 0) {
+        queryClient.setQueryData<MapResponse>(mapKey, old => {
+          const center = old?.center ?? {
+            latitude: latestPoints.reduce((s, p) => s + p.latitude, 0) / latestPoints.length,
+            longitude: latestPoints.reduce((s, p) => s + p.longitude, 0) / latestPoints.length,
+          };
+          return {
+            status: 'ok',
+            routeId,
+            city: old?.city ?? '',
+            center,
+            points: old?.points ?? [],
+            chat_suggestions: latestPoints,
+          };
+        });
+      } else {
+        queryClient.invalidateQueries({ queryKey: mapKey });
       }
     },
   });

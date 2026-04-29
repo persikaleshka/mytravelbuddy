@@ -67,7 +67,7 @@
 
 .form-group input.error,
 .form-group textarea.error {
-  border-color: #f8d3c5; /* Color 1 for error state */
+  border-color: #ef4444;
 }
 
 .form-help {

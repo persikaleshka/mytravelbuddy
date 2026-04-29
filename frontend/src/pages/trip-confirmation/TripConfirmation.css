@@ -62,11 +62,31 @@
 
 .btn-outline {
   background-color: transparent;
-  border: 2px solid #fceee9; /* Color 2 for buttons */
-  color: #667b68; /* Color 5 for text */
+  border: 1px solid #667b68;
+  color: #667b68;
 }
 
 .btn-outline:hover {
-  background-color: #fceee9; /* Color 2 for buttons */
-  color: #667b68; /* Color 5 for text */
+  background-color: #667b68;
+  color: #fceee9;
+}
+
+@media (max-width: 480px) {
+  .trip-confirmation-page {
+    padding: 1rem;
+    align-items: flex-start;
+    padding-top: 2rem;
+  }
+
+  .trip-confirmation-container {
+    padding: 1.5rem;
+  }
+
+  .confirmation-actions {
+    flex-direction: column;
+  }
+
+  .confirmation-actions .btn {
+    width: 100%;
+  }
 }

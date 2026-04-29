@@ -12,14 +12,20 @@ interface AssistantStructuredProps {
 const AssistantStructured: React.FC<AssistantStructuredProps> = ({ structured, onShowOnMap }) => {
   const { t } = useTranslation();
 
-  if (!structured || Object.keys(structured).length === 0) {
+  const hasContent =
+    (structured.summary && (Array.isArray(structured.summary) ? structured.summary.length > 0 : structured.summary.trim() !== '')) ||
+    (structured.plan && structured.plan.length > 0) ||
+    (structured.questions && structured.questions.length > 0) ||
+    (structured.places && structured.places.length > 0);
+
+  if (!structured || !hasContent) {
     return null;
   }
 
   const handleShowOnMap = (place: Record<string, unknown>) => {
     const latitude = place.latitude as number | undefined;
     const longitude = place.longitude as number | undefined;
-    if (!latitude || !longitude) return;
+    if (latitude == null || longitude == null) return;
     const point = {
       location_id: (place.location_id as string) || '',
       name: (place.name as string) || '',

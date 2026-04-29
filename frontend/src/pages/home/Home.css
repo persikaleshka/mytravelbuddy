@@ -1,12 +1,10 @@
 
 .home-page {
-  background: #a3b899; /* Color 4 for home page background */
+  background: #a3b899;
   color: #fceee9;
   font-family: var(--sans);
-  min-height: 100vh;
   width: 100%;
 }
-
 
 .hero-section {
   min-height: 80vh;
@@ -55,8 +53,8 @@
 
 
 .middle-section {
-  background: var(--surface);
-  color: var(--text);
+  background: #667b68;
+  color: #fceee9;
   padding: var(--spacing-xxl) var(--spacing-lg);
   text-align: center;
 }
@@ -69,12 +67,12 @@
 .middle-content h2 {
   font-size: 2.5rem;
   margin-bottom: var(--spacing-lg);
-  color: var(--text);
+  color: #fceee9;
 }
 
 .middle-content p {
   font-size: 1.25rem;
-  color: var(--text-secondary);
+  color: rgba(252, 238, 233, 0.85);
   max-width: 600px;
   margin: 0 auto var(--spacing-lg);
 }
@@ -99,21 +97,21 @@
 }
 
 .btn-outline {
-  border: 1px solid #667b68; /* Color 5 for border */
+  border: 1px solid #fceee9;
   background: transparent;
-  color: #667b68; /* Color 5 for text */
+  color: #fceee9;
 }
 
 .btn-outline:hover {
-  background: #fceee9; /* Color 2 for background */
-  border-color: #667b68; /* Color 5 for border */
-  color: #667b68; /* Color 5 for text */
+  background: #fceee9;
+  border-color: #fceee9;
+  color: #667b68;
 }
 
 .btn-outline:active {
-  background: #fceee9; /* Color 2 for background */
-  border-color: #667b68; /* Color 5 for border */
-  color: #667b68; /* Color 5 for text */
+  background: #fceee9;
+  border-color: #fceee9;
+  color: #667b68;
   transform: scale(0.98);
 }
 

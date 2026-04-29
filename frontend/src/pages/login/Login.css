@@ -345,3 +345,23 @@
     padding: var(--spacing-lg);
   }
 }
+
+.lang-switch-btn {
+  margin-top: 1rem;
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #555;
+  transition: border-color 0.2s, color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.lang-switch-btn:hover {
+  border-color: #667b68;
+  color: #667b68;
+}
