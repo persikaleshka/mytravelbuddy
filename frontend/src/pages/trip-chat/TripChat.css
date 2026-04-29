@@ -439,6 +439,32 @@
   background-color: #0056b3;
 }
 
+.tickets-section {
+  margin-bottom: 30px;
+}
+
+.tickets-section h3 {
+  color: #667b68;
+  margin-bottom: 12px;
+}
+
+.tickets-link {
+  display: inline-block;
+  padding: 10px 18px;
+  background-color: #fceee9;
+  color: #667b68;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.tickets-link:hover {
+  background-color: #f8d3c5;
+  color: #667b68;
+}
+
 .structured-placeholder {
   padding: 10px 20px;
   background-color: #f8f9fa;

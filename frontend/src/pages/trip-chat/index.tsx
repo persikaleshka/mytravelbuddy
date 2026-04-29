@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import AssistantStructured from '@/widgets/assistant-structured/AssistantStructured';
+import type { ChatMapPoint } from '@/entities/chat/types';
 import { useRoute, useDeleteRoute, useRoutePage, useRouteMapData } from '@/shared/api/hooks/routes';
 import { useRouteMessages, useSendRouteMessage } from '@/shared/api/hooks/chat';
 import WeatherDisplay from '@/widgets/weather-display';
@@ -16,7 +18,7 @@ const TripChatPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isNewTrip = (location.state as { isNew?: boolean } | null)?.isNew === true;
 
   const { data: route, isLoading: isRouteLoading, isError: isRouteError, error: routeError } = useRoute(id || '');
@@ -73,7 +75,7 @@ const TripChatPage: React.FC = () => {
     if (!text || !id) return;
     lastMessageTextRef.current = text;
     sendMessage(
-      { text },
+      { text, lang: i18n.language },
       {
         onSuccess: () => {
           setNewMessage('');
@@ -198,7 +200,23 @@ const TripChatPage: React.FC = () => {
                 <div key={message.id} className={`message ${message.sender}`}>
                   <div className="message-content">
                     <div className={`message-text${message.sender === 'assistant' ? ' message-text--formatted' : ''}`}>
-                      {message.sender === 'assistant' ? (message.formattedText || message.text) : message.text}
+                      {message.sender === 'assistant'
+                        ? <>
+                            {message.assistantStructured && Object.keys(message.assistantStructured).length > 0 && (
+                              <AssistantStructured
+                                structured={message.assistantStructured}
+                                onShowOnMap={(point: ChatMapPoint) => {
+                                  window.dispatchEvent(new CustomEvent('showPointOnMap', {
+                                    detail: { latitude: point.latitude, longitude: point.longitude },
+                                  }));
+                                }}
+                              />
+                            )}
+                            {(!message.assistantStructured || Object.keys(message.assistantStructured).length === 0) && (
+                              <span style={{ whiteSpace: 'pre-wrap' }}>{message.formattedText || message.text}</span>
+                            )}
+                          </>
+                        : message.text}
                     </div>
                     <div className="message-time">
                       {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -322,6 +340,20 @@ const TripChatPage: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {route?.start_date && route?.end_date && (
+              <div className="tickets-section">
+                <h3>{t('tripChat.tickets')}</h3>
+                <a
+                  href={`https://travel.yandex.ru/avia/c213--anywhere/?adult_seats=1&children_seats=0&infant_seats=0&klass=economy&oneway=2&return_date=${route.end_date}&when=${route.start_date}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tickets-link"
+                >
+                  {t('tripChat.ticketsLink')}
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </div>
