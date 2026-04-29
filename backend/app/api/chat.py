@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 
 from .. import auth, database, models
 from ..integrations import generate_trip_assistant_output
-from ..services import extract_map_points_from_text, format_assistant_text
+from ..integrations.geocoding import resolve_place_coords
+from ..services import format_assistant_text
 from .schemas import (
     ApiChatMapPoint,
     ApiChatMessageCreate,
@@ -59,14 +60,37 @@ def _to_response(message: models.ChatMessage) -> ApiChatMessageResponse:
 
 
 def _get_user_preferences_text(user: models.User) -> str:
-    if user.preferences is None or not user.preferences.interests:
+    pref = user.preferences
+    if pref is None:
         return ""
-    clean_values = [
+
+    interests = [
         value.strip()
-        for value in user.preferences.interests.split(",")
+        for value in (pref.interests or "").split(",")
         if value.strip() and not value.strip().isdigit()
     ]
-    return ", ".join(clean_values)
+    interests_text = ", ".join(interests) if interests else "не указаны"
+
+    budget_value = pref.budget or 2.0
+    if budget_value <= 1.5:
+        budget_text = "эконом"
+    elif budget_value >= 2.5:
+        budget_text = "люкс"
+    else:
+        budget_text = "средний"
+
+    travel_styles = [
+        value.strip()
+        for value in (pref.travel_style or "").split(",")
+        if value.strip()
+    ]
+    travel_style_text = ", ".join(travel_styles) if travel_styles else "не указан"
+
+    return (
+        f"интересы: {interests_text}; "
+        f"бюджет: {budget_text}; "
+        f"стиль поездки: {travel_style_text}"
+    )
 
 
 def _get_recent_history(
@@ -160,29 +184,53 @@ async def send_route_message(
         if not isinstance(assistant_structured, dict):
             assistant_structured = {}
 
+        raw_places = assistant_structured.get("places") or []
+        geocoded_places = []
+        map_points = []
+
+        for place in raw_places:
+            if not isinstance(place, dict):
+                continue
+            name = (place.get("name") or "").strip()
+            if not name:
+                continue
+            lat = place.get("latitude")
+            lon = place.get("longitude")
+            if lat is None or lon is None:
+                coords = resolve_place_coords(city=route.city, place_name=name)
+                if coords:
+                    lat, lon = coords
+            geocoded_place = {**place, "latitude": lat, "longitude": lon}
+            geocoded_places.append(geocoded_place)
+            if lat is not None and lon is not None:
+                try:
+                    map_points.append(ApiChatMapPoint(
+                        location_id=str(place.get("location_id") or name),
+                        name=name,
+                        category=(place.get("category") or "other").strip(),
+                        latitude=float(lat),
+                        longitude=float(lon),
+                        day=place.get("day") if isinstance(place.get("day"), int) else None,
+                        reason=place.get("reason") if isinstance(place.get("reason"), str) else None,
+                    ))
+                except Exception:
+                    continue
+
+        assistant_structured_with_coords = {**assistant_structured, "places": geocoded_places}
+
         formatted_assistant_reply = format_assistant_text(assistant_reply)
         assistant_message = models.ChatMessage(
             route_id=route.id,
             user_id=current_user.id,
             sender="assistant",
             text=formatted_assistant_reply,
-            ai_payload=json.dumps(assistant_structured, ensure_ascii=False),
+            ai_payload=json.dumps(assistant_structured_with_coords, ensure_ascii=False),
         )
         db.add(assistant_message)
         db.commit()
 
         db.refresh(user_message)
         db.refresh(assistant_message)
-
-        map_points = [
-            ApiChatMapPoint(**point)
-            for point in extract_map_points_from_text(
-                db=db,
-                city=route.city,
-                assistant_text=formatted_assistant_reply,
-                structured_places=assistant_structured.get("places"),
-            )
-        ]
     except Exception:
         db.rollback()
         raise
@@ -191,5 +239,5 @@ async def send_route_message(
         user_message=_to_response(user_message),
         assistant_message=_to_response(assistant_message),
         map_points=map_points,
-        assistant_structured=assistant_structured,
+        assistant_structured=assistant_structured_with_coords,
     )
