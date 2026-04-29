@@ -21,8 +21,8 @@ async def register(user: schemas.UserCreate, db: Session = Depends(database.get_
     db_pref = models.UserPreference(
         user_id=db_user.id,
         interests="",
-        budget=0,
-        travel_style="relaxed",
+        budget=2.0,
+        travel_style="расслабленный",
     )
     db.add(db_pref)
     db.commit()
