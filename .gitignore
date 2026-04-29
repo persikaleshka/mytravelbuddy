@@ -1,0 +1,39 @@
+# Environments
+.venv/
+venv/
+venv312/
+backend/venv/
+backend/venv312/
+frontend/venv/
+frontend/venv312/
+
+# Python cache / tooling
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Local databases / runtime
+*.db
+backend_test.db
+
+# Node / frontend build artifacts
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# Secrets
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
