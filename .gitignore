@@ -1,3 +1,17 @@
+<<<<<<< HEAD
+# Environments
+.venv/
+venv/
+venv312/
+backend/venv/
+backend/venv312/
+frontend/venv/
+frontend/venv312/
+
+# Python cache / tooling
+__pycache__/
+*.py[cod]
+=======
 # ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
@@ -16,6 +30,7 @@ dist/
 .eggs/
 
 # Tooling caches
+>>>>>>> main
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
@@ -23,6 +38,28 @@ dist/
 .coverage.*
 htmlcov/
 
+<<<<<<< HEAD
+# Local databases / runtime
+*.db
+backend_test.db
+
+# Node / frontend build artifacts
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# Secrets
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+=======
 # ── Node / Frontend ───────────────────────────────────────────────────────────
 node_modules/
 dist-ssr/
@@ -55,3 +92,4 @@ lerna-debug.log*
 
 # ── Runtime ───────────────────────────────────────────────────────────────────
 *.pid
+>>>>>>> main

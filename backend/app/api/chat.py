@@ -60,14 +60,37 @@ def _to_response(message: models.ChatMessage) -> ApiChatMessageResponse:
 
 
 def _get_user_preferences_text(user: models.User) -> str:
-    if user.preferences is None or not user.preferences.interests:
+    pref = user.preferences
+    if pref is None:
         return ""
-    clean_values = [
+
+    interests = [
         value.strip()
-        for value in user.preferences.interests.split(",")
+        for value in (pref.interests or "").split(",")
         if value.strip() and not value.strip().isdigit()
     ]
-    return ", ".join(clean_values)
+    interests_text = ", ".join(interests) if interests else "не указаны"
+
+    budget_value = pref.budget or 2.0
+    if budget_value <= 1.5:
+        budget_text = "эконом"
+    elif budget_value >= 2.5:
+        budget_text = "люкс"
+    else:
+        budget_text = "средний"
+
+    travel_styles = [
+        value.strip()
+        for value in (pref.travel_style or "").split(",")
+        if value.strip()
+    ]
+    travel_style_text = ", ".join(travel_styles) if travel_styles else "не указан"
+
+    return (
+        f"интересы: {interests_text}; "
+        f"бюджет: {budget_text}; "
+        f"стиль поездки: {travel_style_text}"
+    )
 
 
 def _get_recent_history(
