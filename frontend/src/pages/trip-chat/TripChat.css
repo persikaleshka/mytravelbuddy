@@ -1,6 +1,6 @@
 .trip-chat-page {
   padding: 0;
-  min-height: 100vh;
+  height: 100vh;
   background-color: #dde6d5;
   display: flex;
   flex-direction: column;
@@ -73,12 +73,21 @@
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 160px);
+  height: calc(100vh - 200px);
   background-color: white;
   margin: 0 0 20px 0;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+}
+
+.messages-container {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .chat-header {
@@ -200,7 +209,7 @@
   background: #dde6d5;
   padding: 20px;
   box-sizing: border-box;
-  overflow-y: visible;
+  height: calc(100vh - 120px);
 }
 
 .trip-content-inner {
@@ -277,9 +286,10 @@
   margin: 0;
   color: #6c757d;
   font-size: 13px;
-  white-space: normal;
-  overflow: visible;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
 
 .route-point-item {
@@ -379,98 +389,26 @@
 
 
 @media (max-width: 768px) {
-  .trip-chat-page {
-    height: auto;
-    min-height: 100vh;
-  }
-
-  .trip-header {
-    padding: 10px 12px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .trip-info-header {
-    position: static;
-    order: -1;
-    width: 100%;
-    text-align: center;
-    pointer-events: auto;
-  }
-
-  .trip-info-header h1 {
-    font-size: 1.1rem;
-  }
-
   .main-content {
     flex-direction: column;
   }
-
+  
   .trip-sidebar {
     width: 100%;
-    height: auto;
-    padding: 10px;
+    height: 100%;
   }
-
-  .chat-container {
-    height: 60vh;
-    margin: 0 0 10px 0;
-  }
-
+  
   .trip-content {
     width: 100%;
-    height: auto;
-    overflow-y: visible;
-    padding: 10px;
+    height: 100%;
   }
-
-  .message {
-    max-width: 92%;
-  }
-
-  .show-on-map-button {
-    padding: 4px 8px;
-    font-size: 12px;
-    margin-left: 8px;
-  }
-
-  .trip-header .back-button,
-  .trip-header .delete-button {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.85rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .trip-sidebar {
-    padding: 8px;
-  }
-
-  .trip-content {
-    padding: 8px;
-  }
-
+  
   .chat-container {
-    height: 55vh;
+    margin: 0 10px 10px 10px;
   }
-
-  .message-input-container {
-    padding: 10px;
-    gap: 6px;
-  }
-
-  .send-button {
-    padding: 10px 14px;
-  }
-
-  .route-point-item {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .show-on-map-button {
-    margin-left: 0;
-    width: 100%;
+  
+  .trip-info {
+    margin: 0 10px 10px 10px;
   }
 }
 

@@ -16,3 +16,11 @@ export interface WeatherResponse {
     longitude: number;
   };
 }
+
+export interface WeatherPoint {
+  date: string;
+  temp_max: number | null;
+  temp_min: number | null;
+  weather_code: number | null;
+  precipitation_sum: number | null;
+}

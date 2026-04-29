@@ -42,7 +42,8 @@ export const useRouteMapData = (id: string) => {
     queryKey: [ROUTES_QUERY_KEY, 'map', id],
     queryFn: () => getRouteMapData(id),
     enabled: !!id,
-    staleTime: 30_000,
+    staleTime: 0,
+    gcTime: 0,
   });
 };
 

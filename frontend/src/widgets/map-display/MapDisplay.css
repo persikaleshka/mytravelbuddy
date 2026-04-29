@@ -68,7 +68,7 @@
   background-color: #0056b3;
 }
 
-.ymaps-2-1-79-map {
+.leaflet-container {
   border-radius: 8px;
   overflow: hidden;
 }

@@ -56,7 +56,7 @@ describe('AssistantStructured', () => {
     render(<AssistantStructured structured={structured} onShowOnMap={noop} />);
     expect(screen.getByText('Третьяковская галерея')).toBeInTheDocument();
     expect(screen.getByText('Красная площадь')).toBeInTheDocument();
-    expect(screen.getByText('Главный музей')).toBeInTheDocument();
+    expect(screen.getByText('Причина: Главный музей')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Показать на карте' })).toHaveLength(2);
   });
 

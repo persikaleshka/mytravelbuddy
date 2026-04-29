@@ -1,10 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import type { WeatherData } from '@/shared/api/types/weather';
+import type { WeatherPoint } from '@/shared/api/types/weather';
 import './WeatherDisplay.css';
 
 interface WeatherDisplayProps {
-  weatherData: WeatherData[];
+  weatherData: WeatherPoint[];
 }
 
 const WeatherDisplay: React.FC<WeatherDisplayProps> = ({ weatherData }) => {

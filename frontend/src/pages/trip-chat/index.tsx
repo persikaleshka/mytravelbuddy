@@ -28,10 +28,10 @@ const TripChatPage: React.FC = () => {
   const hasMessages = messages.length > 0;
   const shouldFetchDetails = !isNewTrip || hasMessages;
 
-  const { data: routePage } = useRoutePage(
+  const { data: routePage, isLoading: isRoutePageLoading } = useRoutePage(
     shouldFetchDetails ? (id || '') : ''
   );
-  const { data: mapData } = useRouteMapData(
+  const { data: mapData, isLoading: isMapLoading } = useRouteMapData(
     shouldFetchDetails ? (id || '') : ''
   );
   const { mutate: sendMessage, isPending: isSending, isError: isSendError, error: sendError } = useSendRouteMessage(id || '');
@@ -106,7 +106,9 @@ const TripChatPage: React.FC = () => {
   const routePageReady = !!routePage && routePage.route?.id === id;
   const mapDataReady   = !!mapData   && mapData.routeId     === id;
 
-  const isLoading = isRouteLoading || isMessagesLoading || !routeReady;
+  const isLoading =
+    isRouteLoading || isMessagesLoading || isRoutePageLoading || isMapLoading ||
+    !routeReady;
 
   const formatDate = (d?: string) => d ? new Date(d).toLocaleDateString() : '';
   const routeDateRange = route
@@ -224,11 +226,18 @@ const TripChatPage: React.FC = () => {
               ))}
             </div>
 
-            {isSendError && !sendError?.message.toLowerCase().includes('timeout') && !(sendError as unknown as { code?: string })?.code?.includes('ECONNABORTED') && (
+            {isSendError && (
               <div className="error-message">
                 {sendError?.message.includes('429') ? (
                   <>
                     <p>{t('tripChat.errorTooManyRequests')}</p>
+                    <button onClick={() => doSend(lastMessageTextRef.current)} className="retry-button" disabled={isSending}>
+                      {t('tripChat.retry')}
+                    </button>
+                  </>
+                ) : sendError?.message.toLowerCase().includes('timeout') || sendError?.message.toLowerCase().includes('network') ? (
+                  <>
+                    <p>{t('tripChat.errorNetwork')}</p>
                     <button onClick={() => doSend(lastMessageTextRef.current)} className="retry-button" disabled={isSending}>
                       {t('tripChat.retry')}
                     </button>
