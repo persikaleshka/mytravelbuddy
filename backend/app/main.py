@@ -2,11 +2,9 @@ import logging
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -16,7 +14,6 @@ from .api import locations as api_locations
 from .api import profile as api_profile
 from .api import routes as api_routes
 from .database import engine, Base
-from .routes import users
 
 logger = logging.getLogger(__name__)
 ROOT_DIR = Path(__file__).resolve().parents[2]
@@ -49,11 +46,6 @@ if cors_origins:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-templates = Jinja2Templates(directory="app/templates")
-
-app.include_router(users.router, prefix="/auth", tags=["users"])
 app.include_router(api_auth.router, prefix="/api/auth", tags=["api-auth"])
 app.include_router(api_chat.router, prefix="/api", tags=["api-chat"])
 app.include_router(api_profile.router, prefix="/api", tags=["api-profile"])
@@ -81,11 +73,3 @@ if FRONTEND_DIST_DIR.exists():
         SPAStaticFiles(directory=str(FRONTEND_DIST_DIR), html=True),
         name="frontend",
     )
-else:
-    @app.get("/", response_class=HTMLResponse)
-    async def home(request: Request):
-        return templates.TemplateResponse("index.html", {"request": request})
-
-    @app.get("/dashboard", response_class=HTMLResponse)
-    async def dashboard(request: Request):
-        return templates.TemplateResponse("dashboard.html", {"request": request})
